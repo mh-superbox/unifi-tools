@@ -4,6 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+asyncio-mqtt = "*"
+pyyaml = "*"
 
 [dev-packages]
 mypy = "*"
@@ -14,6 +16,7 @@ flake8-bugbear = "*"
 flake8-docstrings = "*"
 pytest = "*"
 pytest-cov = "*"
+types-pyyaml = "*"
 
 [requires]
 python_version = "3.8"

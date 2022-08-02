@@ -117,7 +117,6 @@ def main():
                 pass
             finally:
                 logger.info("Successfully shutdown the UniFi Tools service.")
-
     except KeyboardInterrupt:
         pass
 

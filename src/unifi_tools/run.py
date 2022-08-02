@@ -98,7 +98,7 @@ class UniFiTools:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Control UniFi port")
+    parser = argparse.ArgumentParser(description="Control UniFi devices with MQTT commands")
     parser.add_argument("-i", "--install", action="store_true", help="install unifi tools")
     parser.add_argument("-y", "--yes", action="store_true", help="automatic yes to install prompts")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")

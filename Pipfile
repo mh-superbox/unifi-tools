@@ -4,8 +4,9 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-asyncio-mqtt = "*"
-pyyaml = "*"
+asyncio-mqtt = "~=0.12.1"
+pyyaml = "~=6.0"
+paho-mqtt = "~=1.6.1"
 
 [dev-packages]
 mypy = "*"

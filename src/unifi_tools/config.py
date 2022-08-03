@@ -76,6 +76,15 @@ class HomeAssistantConfig(ConfigBase):
 
 
 @dataclass
+class UniFiControllerConfig(ConfigBase):
+    url: str = field(default="unifi.superbox.one")  # TODO change
+    username: str = field(default="hass")  # TODO change
+    password: str = field(default="TQx6TXacuUu98ee4VqJH")  # TODO change
+    retry_limit: int = field(default=30)
+    reconnect_interval: int = field(default=10)
+
+
+@dataclass
 class LoggingConfig(ConfigBase):
     level: str = field(default="debug")  # TODO change to info
 
@@ -85,6 +94,7 @@ class Config(ConfigBase):
     device_name: str = field(default=socket.gethostname())
     mqtt: MqttConfig = field(default=MqttConfig())
     homeassistant: HomeAssistantConfig = field(default=HomeAssistantConfig())
+    unifi_controller: UniFiControllerConfig = field(default=UniFiControllerConfig())
     logging: LoggingConfig = field(default=LoggingConfig())
     config_base_path: Path = field(default=Path("/etc"))
 

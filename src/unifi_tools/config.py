@@ -13,9 +13,9 @@ from typing import Optional
 
 import yaml
 
-LOG_COVER_DEVICE_LOCKED: str = "[COVER] [%s] Device is locked! Other position change is currently running."
 LOG_MQTT_PUBLISH: str = "[MQTT] [%s] Publishing message: %s"
 LOG_MQTT_SUBSCRIBE: str = "[MQTT] [%s] Subscribe message: %s"
+LOG_MQTT_INVALIDE_SUBSCRIBE: str = "[MQTT] [%s] Invalid subscribe message: %s"
 LOG_MQTT_SUBSCRIBE_TOPIC: str = "[MQTT] Subscribe topic %s"
 
 stdout_handler = logging.StreamHandler(stream=sys.stdout)

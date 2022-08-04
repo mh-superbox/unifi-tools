@@ -1,0 +1,2 @@
+[console_scripts]
+unifi-tools = unifi_tools.run:main

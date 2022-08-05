@@ -56,7 +56,7 @@ class ConfigBase:
 
 @dataclass
 class MqttConfig(ConfigBase):
-    host: str = field(default="unipi.home")  # TODO change to localhost
+    host: str = field(default="localhost")
     port: int = field(default=1883)
     keepalive: int = field(default=15)
     retry_limit: int = field(default=30)
@@ -77,16 +77,15 @@ class HomeAssistantConfig(ConfigBase):
 
 @dataclass
 class UniFiControllerConfig(ConfigBase):
-    url: str = field(default="unifi.superbox.one")  # TODO change
-    username: str = field(default="hass")  # TODO change
-    password: str = field(default="TQx6TXacuUu98ee4VqJH")  # TODO change
-    retry_limit: int = field(default=30)
-    reconnect_interval: int = field(default=10)
+    url: str = field(default="localhost")
+    port: int = field(default=8443)
+    username: str = field(default="username")
+    password: str = field(default="password")
 
 
 @dataclass
 class LoggingConfig(ConfigBase):
-    level: str = field(default="debug")  # TODO change to info
+    level: str = field(default="info")
 
 
 @dataclass
@@ -94,15 +93,15 @@ class Config(ConfigBase):
     device_name: str = field(default=socket.gethostname())
     mqtt: MqttConfig = field(default=MqttConfig())
     homeassistant: HomeAssistantConfig = field(default=HomeAssistantConfig())
+    features: dict = field(init=False, default_factory=dict)
     unifi_controller: UniFiControllerConfig = field(default=UniFiControllerConfig())
     logging: LoggingConfig = field(default=LoggingConfig())
-    config_base_path: Path = field(default=Path("/etc"))
+    config_file_path: Path = field(default=Path("/etc/unifi/settings.yaml"))
 
     def __post_init__(self):
         super().__post_init__()
 
-        config_path: Path = self.config_base_path.joinpath("unifi-tools.yaml")
-        _config: dict = self.get_config(config_path)
+        _config: dict = self.get_config(self.config_file_path)
 
         self.update(_config)
 
@@ -118,6 +117,9 @@ class Config(ConfigBase):
                 sys.exit(1)
 
         self._change_logger_level()
+
+    def get_feature(self, device_id: str) -> dict:
+        return self.features.get(device_id, {})
 
     @staticmethod
     def get_config(config_path: Path) -> dict:

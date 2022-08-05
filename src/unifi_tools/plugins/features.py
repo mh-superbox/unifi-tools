@@ -41,6 +41,7 @@ class BaseFeaturesMqttPlugin(ABC):
             await self.mqtt_client.subscribe(topic)
             logger.debug(LOG_MQTT_SUBSCRIBE_TOPIC, topic)
 
+        # TODO
         # task = asyncio.create_task(self._publish())
         # tasks.add(task)
 
@@ -68,20 +69,25 @@ class UniFiSwitchFeaturesMqttPlugin(BaseFeaturesMqttPlugin):
     @staticmethod
     async def _subscribe(feature, topic: str, messages: AsyncIterable):
         async for message in messages:
+            data: dict = {}
             value: str = message.payload.decode()
 
             try:
-                data: dict = json.loads(value)
+                data = json.loads(value)
+            except ValueError:
+                logger.error(LOG_MQTT_INVALIDE_SUBSCRIBE, topic, value)
+
+            if data:
                 port_data: dict = {}
 
                 if UniFiFeatureConst.POE_MODE in data.keys():
                     port_data[UniFiFeatureConst.POE_MODE] = data[UniFiFeatureConst.POE_MODE]
 
-                await feature.set_port(port_data)
-            except ValueError:
-                logger.error(LOG_MQTT_INVALIDE_SUBSCRIBE, topic, value)
+                updated: bool = await feature.set_port(port_data)
+                logger.info(LOG_MQTT_SUBSCRIBE, topic, value)
 
-            logger.info(LOG_MQTT_SUBSCRIBE, topic, value)
+                if updated:
+                    logger.debug("[API] Port updated")
 
     async def _publish(self):
         while True:

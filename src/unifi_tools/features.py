@@ -10,11 +10,23 @@ from unifi_tools.config import Config
 from unifi_tools.helpers import DataStorage
 
 
+class UniFiFeaturePoEState:
+    ON: str = "on"
+    OFF: str = "off"
+    POE: str = "auto"
+    POE24V: str = "pasv24"
+
+
 class UniFiFeatureConst:
     PORT: Final[str] = "port"
     POE_MODE: Final[str] = "poe_mode"
     PORT_IDX: Final[str] = "port_idx"
-    POE_MODES: Final[tuple] = ("pasv24", "auto", "off")
+    POE_MODES: Final[tuple] = (
+        UniFiFeaturePoEState.POE24V,
+        UniFiFeaturePoEState.POE,
+        UniFiFeaturePoEState.OFF,
+        UniFiFeaturePoEState.ON,
+    )
 
 
 class UniFiDeviceFeature(ABC):
@@ -68,16 +80,31 @@ class UniFiSwitchPort(UniFiDeviceFeature):
 
         return topic
 
-    @staticmethod
-    def _set_port_poe(port_info: dict, updated_port_info: dict):
+    def _set_port_poe(self, port_info: dict, updated_port_info: dict) -> bool:
+        updated_poe_mode: Optional[str] = updated_port_info.get(UniFiFeatureConst.POE_MODE)
+
+        # When state is "on" then check settings if PoE for this port is "auto" or "pasv24".
+        if updated_poe_mode == UniFiFeaturePoEState.ON:
+            feature = self.config.get_feature(device_id=self.device_info["_id"])
+            updated_poe_mode = UniFiFeaturePoEState.POE
+
+            for port in feature.get("ports", []):
+                if port.get(UniFiFeatureConst.PORT_IDX) == self.port_idx:
+                    updated_poe_mode = port.get(UniFiFeatureConst.POE_MODE, UniFiFeaturePoEState.POE)
+                    break
+
+        # Only update port if PoE mode is allowed and has changed!
         if (
             port_info.get(UniFiFeatureConst.POE_MODE)
-            and updated_port_info.get(UniFiFeatureConst.POE_MODE) in UniFiFeatureConst.POE_MODES
-            and port_info[UniFiFeatureConst.POE_MODE] != updated_port_info.get(UniFiFeatureConst.POE_MODE)
+            and updated_poe_mode in UniFiFeatureConst.POE_MODES
+            and port_info[UniFiFeatureConst.POE_MODE] != updated_poe_mode
         ):
-            port_info[UniFiFeatureConst.POE_MODE] = updated_port_info.get(UniFiFeatureConst.POE_MODE)
+            port_info[UniFiFeatureConst.POE_MODE] = updated_poe_mode
+            return True
 
-    async def set_port(self, updated_port_info: dict):
+        return False
+
+    async def set_port(self, updated_port_info: dict) -> bool:
         port_overrides: Optional[List[dict]] = self.unifi_devices.get_device_port_info(self.device_info["_id"])
 
         if port_overrides:
@@ -85,13 +112,14 @@ class UniFiSwitchPort(UniFiDeviceFeature):
 
             for port_info in port_overrides:
                 if port_info[UniFiFeatureConst.PORT_IDX] == self.port_idx:
-                    self._set_port_poe(port_info, updated_port_info)
-                    update_devices = True
+                    update_devices = self._set_port_poe(port_info, updated_port_info)
 
             if update_devices:
-                self.unifi_devices.update_device_port_info(
+                return self.unifi_devices.update_device_port_info(
                     device_id=self.device_info["_id"], port_overrides={"port_overrides": port_overrides}
                 )
+
+        return False
 
 
 class FeatureMap(DataStorage):

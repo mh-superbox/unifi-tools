@@ -7,11 +7,12 @@ import sys
 import uuid
 from asyncio import Task
 from contextlib import AsyncExitStack
-from time import sleep
+from pathlib import Path
 from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Set
+from typing import Tuple
 
 import requests
 from asyncio_mqtt import Client
@@ -41,22 +42,38 @@ class UniFiAPI:
             "Content-Type": "application/json; charset=utf-8",
         }
 
-        self._retry_reconnect: int = 0
+    @property
+    def controller_url(self):
+        _controller_url: str = f"https://{self.config.unifi_controller.url}"
+
+        if self.config.unifi_controller.port != 443:
+            _controller_url += f":{self.config.unifi_controller.port}"
+
+        return _controller_url
 
     @staticmethod
-    def return_json(response) -> dict:
+    def return_json(response) -> Optional[Tuple[list, dict]]:
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             logger.debug("[API] %s", e)
             logger.error("[API] Request failed with return code %s", response.status_code)
-            sys.exit(1)
 
-        return response.json()
+        try:
+            data: dict = response.json()
+            meta: dict = data.get("meta", {})
+
+            logger.debug(
+                "[API] [%s]%s %s", meta.get("rc"), f""" {meta["msg"]}""" if meta.get("msg") else "", response.url
+            )
+
+            return data.get("data", []), meta
+        except requests.exceptions.JSONDecodeError:
+            return None
 
     def login(self):
         response = self._session.post(
-            f"https://{self.config.unifi_controller.url}/api/login",
+            f"{self.controller_url}/api/login",
             headers=self._headers,
             json={
                 "username": self.config.unifi_controller.username,
@@ -65,17 +82,24 @@ class UniFiAPI:
             verify=False,
         )
 
-        self.return_json(response)
+        result: Optional[Tuple[dict, dict]] = self.return_json(response)
 
-        cookies = response.cookies
-        logger.debug("[API] Successfully logged in. Cookies received:")
-        [logger.debug("[API] %s ==> %s", c.name, c.value) for c in cookies]
+        if result is None:
+            sys.exit(1)
 
-        self._logged_in = True
+        if result[1].get("rc") == "ok":
+            cookies = response.cookies
+            logger.info("[API] Successfully logged in.")
+            logger.debug("[API] Cookies received:")
+            [logger.debug("[API] %s ==> %s", c.name, c.value) for c in cookies]
+            self._logged_in = True
+        else:
+            logger.info("[API] Can't connect to API. Maybe wrong username or password?")
+            sys.exit(1)
 
     def logout(self):
         response = self._session.post(
-            f"https://{self.config.unifi_controller.url}/api/logout",
+            f"{self.controller_url}/api/logout",
             headers=self._headers,
             json={
                 "username": self.config.unifi_controller.username,
@@ -85,56 +109,53 @@ class UniFiAPI:
         )
 
         self.return_json(response)
-
-        logger.debug("[API] Successfully logged out")
-
+        logger.info("[API] Successfully logged out")
         self._logged_in = False
 
-    def list_all_devices(self) -> list:
+    def list_all_devices(self) -> Optional[List[dict]]:
         response = self._session.get(
-            f"https://{self.config.unifi_controller.url}/api/s/default/stat/device",
+            f"{self.controller_url}/api/s/default/stat/device",
             headers=self._headers,
             verify=False,
         )
 
-        data = self.return_json(response)
-        logger.debug("[API] List all devices")
+        result: Optional[Tuple[list, dict]] = self.return_json(response)
 
-        return data.get("data", [])
+        if result is None:
+            return None
 
-    def update_device(self, device_id: str, port_overrides: List[dict]):
+        self._reconnect(meta=result[1], func_name="list_all_devices")
+        devices_data: List[dict] = result[0]
+
+        if devices_data:
+            logger.debug("[API] [list_all_devices] %s", devices_data)
+
+        return devices_data
+
+    def update_device(self, device_id: str, port_overrides: List[dict]) -> bool:
         response = self._session.put(
-            f"https://{self.config.unifi_controller.url}/api/s/default/rest/device/{device_id}",
+            f"{self.controller_url}/api/s/default/rest/device/{device_id}",
             headers=self._headers,
             verify=False,
             data=json.dumps(port_overrides),
         )
 
-        self.return_json(response)
-        logger.debug("[API] Updated device %s", device_id)
+        result: Optional[Tuple[list, dict]] = self.return_json(response)
 
-    def connect(self):
-        reconnect_interval: int = self.config.unifi_controller.reconnect_interval
-        retry_limit: Optional[int] = self.config.unifi_controller.retry_limit
+        if result is None:
+            return False
 
-        while self._logged_in is False:
-            try:
-                logger.info("[API] Login to %s", f"https://{self.config.unifi_controller.url}/api/login")
-                self.login()
-            except requests.exceptions.RequestException as error:
-                logger.debug("[API] Error '%s'", error)
-                logger.error(
-                    "[API] Connecting attempt #%s. Reconnecting in %s seconds.",
-                    self._retry_reconnect + 1,
-                    reconnect_interval,
-                )
-            finally:
-                if retry_limit and self._retry_reconnect > retry_limit:
-                    sys.exit(1)
+        self._reconnect(meta=result[1], func_name="update_device")
+        logger.debug("[API] [update_device] %s", device_id)
 
-                self._retry_reconnect += 1
+        return True
 
-                sleep(reconnect_interval)
+    def _reconnect(self, meta: dict, func_name: str):
+        if meta.get("rc") == "error" and meta.get("msg") == "api.err.LoginRequired":
+            self._logged_in = False
+
+            self.login()
+            getattr(self, func_name)()
 
 
 class UniFiSwitch:
@@ -167,14 +188,17 @@ class UniFiDevices:
         self.features = FeatureMap()
 
     def get_device_info(self, device_id: str) -> Optional[dict]:
-        adopted_devices_list: List[dict] = [
-            device
-            for device in self.unifi_api.list_all_devices()
-            if device.get("adopted") and device.get("_id") == device_id
-        ]
+        list_all_devices: Optional[List[dict]] = self.unifi_api.list_all_devices()
 
-        if adopted_devices_list:
-            return adopted_devices_list[0]
+        if list_all_devices is None:
+            logger.debug("[API] Can't read device info!")
+        else:
+            adopted_devices_list: List[dict] = [
+                device for device in list_all_devices if device.get("adopted") and device.get("_id") == device_id
+            ]
+
+            if adopted_devices_list:
+                return adopted_devices_list[0]
 
         return None
 
@@ -186,19 +210,24 @@ class UniFiDevices:
 
         return None
 
-    def update_device_port_info(self, device_id: str, port_overrides: List[dict]):
-        self.unifi_api.update_device(device_id=device_id, port_overrides=port_overrides)
+    def update_device_port_info(self, device_id: str, port_overrides: List[dict]) -> bool:
+        return self.unifi_api.update_device(device_id=device_id, port_overrides=port_overrides)
 
     def read_devices(self):
-        logger.info("[API] Reading adopted devices")
-        adopted_devices_list: List[dict] = [
-            device for device in self.unifi_api.list_all_devices() if device.get("adopted")
-        ]
+        logger.info("[API] Reading adopted devices.")
+        list_all_devices: Optional[dict] = self.unifi_api.list_all_devices()
 
-        for device_info in adopted_devices_list:
-            if device_info.get("port_overrides"):
-                unifi_switch: UniFiSwitch = UniFiSwitch(config=self.config, unifi_devices=self, device_info=device_info)
-                unifi_switch.parse_features()
+        if list_all_devices is None:
+            logger.debug("[API] Can't read adopted devices!")
+        else:
+            adopted_devices_list: List[dict] = [device for device in list_all_devices if device.get("adopted")]
+
+            for device_info in adopted_devices_list:
+                if device_info.get("port_overrides"):
+                    unifi_switch: UniFiSwitch = UniFiSwitch(
+                        config=self.config, unifi_devices=self, device_info=device_info
+                    )
+                    unifi_switch.parse_features()
 
 
 class UniFiTools:
@@ -239,12 +268,19 @@ class UniFiTools:
             await asyncio.gather(*tasks)
 
     @staticmethod
+    async def exit():
+        loop = asyncio.get_event_loop()
+        loop.stop()
+
+    @staticmethod
     def cancel_tasks():
         for task in asyncio.all_tasks():
             if task.done():
                 continue
 
             task.cancel()
+
+        asyncio.ensure_future(exit())
 
     async def run(self):
         self.unifi_devices.read_devices()
@@ -278,6 +314,7 @@ class UniFiTools:
 
 def main():
     parser = argparse.ArgumentParser(description="Control UniFi devices with MQTT commands")
+    parser.add_argument("-c", "--config", help="path to configuration file")
     parser.add_argument("-i", "--install", action="store_true", help="install unifi tools")
     parser.add_argument("-y", "--yes", action="store_true", help="automatic yes to install prompts")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
@@ -289,11 +326,18 @@ def main():
         else:
             loop = asyncio.new_event_loop()
 
-            unifi_api = UniFiAPI(config=Config())
-            unifi_api.connect()
+            config_overwrites: dict = {}
 
-            unifi_devices = UniFiDevices(config=Config(), unifi_api=unifi_api)
-            unifi_tools = UniFiTools(config=Config(), unifi_devices=unifi_devices)
+            if args.config:
+                config_overwrites["config_file_path"] = Path(args.config)
+
+            config = Config(**config_overwrites)
+
+            unifi_api = UniFiAPI(config=config)
+            unifi_api.login()
+
+            unifi_devices = UniFiDevices(config=config, unifi_api=unifi_api)
+            unifi_tools = UniFiTools(config=config, unifi_devices=unifi_devices)
 
             for sig in (signal.SIGINT, signal.SIGTERM):
                 loop.add_signal_handler(sig, unifi_tools.cancel_tasks)

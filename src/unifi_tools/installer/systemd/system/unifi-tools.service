@@ -1,0 +1,12 @@
+[Unit]
+Description=UniFi Tools
+After=multi-user.target
+Requires=unifi.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/unifi-tools
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

@@ -92,13 +92,16 @@ class FeaturePort(Feature):
 
     @property
     def value(self) -> dict:
+        _value: dict = {}
+
         device_info = self.unifi_devices.cached_devices.get(self.unifi_device.id)
         port = device_info["ports"][self.port_idx]
         poe_mode = self._get_real_poe_mode(poe_mode=port.poe_mode)
 
-        return {
-            FeatureConst.POE_MODE: poe_mode,
-        }
+        if poe_mode:
+            _value[FeatureConst.POE_MODE] = poe_mode
+
+        return _value
 
     @property
     def feature_name(self) -> str:

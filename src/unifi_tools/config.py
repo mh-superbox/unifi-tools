@@ -21,7 +21,7 @@ LOG_MQTT_SUBSCRIBE_TOPIC: str = "[MQTT] Subscribe topic %s"
 stdout_handler = logging.StreamHandler(stream=sys.stdout)
 stdout_handler.setFormatter(logging.Formatter(fmt="%(levelname)8s | %(message)s"))
 
-logger = logging.getLogger("asyncio")
+logger = logging.getLogger("unifi-tools")
 logger.setLevel(logging.INFO)
 logger.addHandler(stdout_handler)
 

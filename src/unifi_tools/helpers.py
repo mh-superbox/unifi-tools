@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import MutableMapping
 
 
@@ -30,3 +31,11 @@ class DataStorage(MutableMapping):
 
     def __repr__(self):
         return f"{type(self).__name__}({self.data})"
+
+
+def cancel_tasks():
+    for task in asyncio.all_tasks():
+        if task.done():
+            continue
+
+        task.cancel()

@@ -17,6 +17,7 @@ from urllib3.exceptions import InsecureRequestWarning
 
 from unifi_tools.config import Config
 from unifi_tools.config import logger
+from unifi_tools.helpers import cancel_tasks
 from unifi_tools.plugins.features import FeaturesMqttPlugin
 from unifi_tools.unifi import UniFiAPI
 from unifi_tools.unifi import UniFiDevices
@@ -62,8 +63,8 @@ class UniFiTools:
 
             await asyncio.gather(*tasks)
 
-    @staticmethod
-    def cancel_tasks():
+    @classmethod
+    def cancel_tasks(cls):
         for task in asyncio.all_tasks():
             if task.done():
                 continue
@@ -128,15 +129,18 @@ def main():
             unifi_tools = UniFiTools(config=config, unifi_devices=unifi_devices)
 
             for sig in (signal.SIGINT, signal.SIGTERM):
-                loop.add_signal_handler(sig, unifi_tools.cancel_tasks)
+                loop.add_signal_handler(sig, cancel_tasks)
 
             try:
                 loop.run_until_complete(unifi_tools.run())
             except asyncio.CancelledError:
                 pass
             finally:
-                unifi_api.logout()
-                logger.info("Successfully shutdown the UniFi Tools service.")
+                if unifi_api.rc > 0:
+                    sys.exit(unifi_api.rc)
+                else:
+                    unifi_api.logout()
+                    logger.info("Successfully shutdown the UniFi Tools service.")
     except KeyboardInterrupt:
         pass
 

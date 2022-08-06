@@ -1,4 +1,7 @@
+import asyncio
+import json
 import sys
+from json import JSONDecodeError
 from typing import Dict
 from typing import List
 from typing import NamedTuple
@@ -6,6 +9,8 @@ from typing import Optional
 from typing import Tuple
 
 import requests
+from requests import ConnectionError
+from requests import HTTPError
 from requests import Response
 
 from unifi_tools.config import Config
@@ -14,6 +19,7 @@ from unifi_tools.features import FeatureConst
 from unifi_tools.features import FeatureMap
 from unifi_tools.features import FeaturePort
 from unifi_tools.helpers import DataStorage
+from unifi_tools.helpers import cancel_tasks
 
 
 class UniFiPort(NamedTuple):
@@ -49,6 +55,7 @@ class UniFiAPIResult(NamedTuple):
 class UniFiAPI:
     def __init__(self, config: Config):
         self.config: Config = config
+        self.rc: int = 0
         self._session = requests.Session()
         self._logged_in: bool = False
         self._login: Optional[Response] = None
@@ -67,26 +74,32 @@ class UniFiAPI:
 
         return _controller_url
 
-    @staticmethod
-    def _get_json(response, log: bool = True) -> Optional[UniFiAPIResult]:
-        try:
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            logger.debug("[API] %s", e)
-            logger.error("[API] Request failed with return code %s", response.status_code)
+    def _exit(self, rc):
+        self.rc = rc
 
+        if asyncio.get_event_loop().is_running():
+            cancel_tasks()
+        else:
+            sys.exit(rc)
+
+    def _get_json(self, response, log: bool = True) -> Optional[UniFiAPIResult]:
         try:
-            data: dict = response.json()
+            data: dict = json.loads(response.text)
             meta: dict = data.get("meta", {})
 
-            if log is True:
-                logger.debug(
-                    "[API] [%s]%s %s", meta.get("rc"), f""" {meta["msg"]}""" if meta.get("msg") else "", response.url
-                )
+            meta_info: str = f"""[{meta.get("rc")}]{f" {meta['msg']}" if meta.get("msg") else ""} {response.url}"""
+
+            if meta.get("rc") == "error" and response.status_code != 401:
+                raise HTTPError(meta_info, response=response)
+            elif log is True:
+                logger.debug("[API] %s", meta_info)
 
             return UniFiAPIResult(meta=meta, data=data.get("data", []))
-        except requests.exceptions.JSONDecodeError:
-            return None
+        except JSONDecodeError:
+            logger.error("[API] JSON decode error. API not available! Shutdown UniFi Tools.")
+            self._exit(1)
+
+        return None
 
     def _request(
         self,
@@ -108,9 +121,18 @@ class UniFiAPI:
                 verify=False,
             )
 
+            if 500 <= response.status_code < 600:
+                raise HTTPError(
+                    f"{response.status_code} Server Error: {response.reason} for url: {url}", response=response
+                )
+
             result = self._get_json(response, log=log)
-        except requests.exceptions.ConnectionError as e:
-            logger.error(e)
+        except ConnectionError as e:
+            logger.debug("[API] %s", e)
+            # self._exit(1)
+        except HTTPError as e:
+            logger.error("[API] %s", e)
+            self._exit(1)
 
         return result, response
 
@@ -125,17 +147,12 @@ class UniFiAPI:
             },
         )
 
-        if result is None:
-            sys.exit(1)
-
         self._login = response
 
-        if result.meta.get("rc") == "ok":
+        if result and result.meta.get("rc") == "ok":
             logger.info("[API] Successfully logged in.")
+            logger.debug("[API] CSRF Token: %s", response.cookies.get("csrf_token"))
             self._logged_in = True
-        else:
-            logger.info("[API] Can't connect to API. Maybe wrong username or password?")
-            sys.exit(1)
 
     def logout(self):
         self._request(
@@ -160,7 +177,7 @@ class UniFiAPI:
         if result is None:
             return []
 
-        self._reconnect(meta=result.meta, func_name="list_all_devices")
+        self._reconnect(response=response, func_name="list_all_devices")
         devices_data: List[dict] = result.data
 
         if devices_data and log is True:
@@ -179,14 +196,14 @@ class UniFiAPI:
         if result is None:
             return False
 
-        self._reconnect(meta=result.meta, func_name="update_device")
+        self._reconnect(response=response, func_name="update_device")
         logger.debug("[API] [update_device] %s", device_id)
 
-    def _reconnect(self, meta: dict, func_name: str):
-        if meta.get("rc") == "error" and meta.get("msg") == "api.err.LoginRequired":
+    def _reconnect(self, response: Optional[Response], func_name: str):
+        if response and response.status_code == 401:
             self._logged_in = False
-
             self.login()
+
             getattr(self, func_name)()
 
 

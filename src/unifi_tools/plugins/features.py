@@ -14,17 +14,19 @@ from unifi_tools.config import LOG_MQTT_PUBLISH
 from unifi_tools.config import LOG_MQTT_SUBSCRIBE
 from unifi_tools.config import LOG_MQTT_SUBSCRIBE_TOPIC
 from unifi_tools.config import logger
+from unifi_tools.features import FeatureConst
 from unifi_tools.features import FeatureMap
-from unifi_tools.features import UniFiFeatureConst
 
 
 class BaseFeaturesMqttPlugin(ABC):
     subscribe_feature_types: List[str] = []
     publish_feature_types: List[str] = []
 
-    def __init__(self, features: FeatureMap, mqtt_client):
-        self.features: FeatureMap = features
+    def __init__(self, unifi_devices, mqtt_client):
+        self.unifi_devices = unifi_devices
         self.mqtt_client = mqtt_client
+        self.features: FeatureMap = unifi_devices.features
+        self.cached_devices: List[dict] = unifi_devices.cached_devices
 
     async def init_tasks(self, stack: AsyncExitStack) -> Set[Task]:
         tasks: Set[Task] = set()
@@ -41,9 +43,8 @@ class BaseFeaturesMqttPlugin(ABC):
             await self.mqtt_client.subscribe(topic)
             logger.debug(LOG_MQTT_SUBSCRIBE_TOPIC, topic)
 
-        # TODO
-        # task = asyncio.create_task(self._publish())
-        # tasks.add(task)
+        task = asyncio.create_task(self._publish())
+        tasks.add(task)
 
         return tasks
 
@@ -57,14 +58,14 @@ class BaseFeaturesMqttPlugin(ABC):
         pass
 
 
-class UniFiSwitchFeaturesMqttPlugin(BaseFeaturesMqttPlugin):
+class FeaturesMqttPlugin(BaseFeaturesMqttPlugin):
     """Provide features control as MQTT commands."""
 
-    subscribe_feature_types: List[str] = [UniFiFeatureConst.PORT]
-    publish_feature_types: List[str] = [UniFiFeatureConst.PORT]
+    subscribe_feature_types: List[str] = [FeatureConst.PORT]
+    publish_feature_types: List[str] = [FeatureConst.PORT]
 
-    def __init__(self, features: FeatureMap, mqtt_client):
-        super().__init__(features, mqtt_client)
+    def __init__(self, unifi_devices, mqtt_client):
+        super().__init__(unifi_devices, mqtt_client)
 
     @staticmethod
     async def _subscribe(feature, topic: str, messages: AsyncIterable):
@@ -78,19 +79,13 @@ class UniFiSwitchFeaturesMqttPlugin(BaseFeaturesMqttPlugin):
                 logger.error(LOG_MQTT_INVALIDE_SUBSCRIBE, topic, value)
 
             if data:
-                port_data: dict = {}
-
-                if UniFiFeatureConst.POE_MODE in data.keys():
-                    port_data[UniFiFeatureConst.POE_MODE] = data[UniFiFeatureConst.POE_MODE]
-
-                updated: bool = await feature.set_port(port_data)
+                await feature.set_state(data)
                 logger.info(LOG_MQTT_SUBSCRIBE, topic, value)
-
-                if updated:
-                    logger.debug("[API] Port updated")
 
     async def _publish(self):
         while True:
+            self.unifi_devices.scan()
+
             features = self.features.by_feature_type(self.publish_feature_types)
 
             for feature in features:

@@ -22,10 +22,10 @@ from urllib3.exceptions import InsecureRequestWarning
 
 from unifi_tools.config import Config
 from unifi_tools.config import logger
+from unifi_tools.features import FeatureConst
 from unifi_tools.features import FeatureMap
-from unifi_tools.features import UniFiFeatureConst
 from unifi_tools.features import UniFiSwitchPort
-from unifi_tools.plugins.features import UniFiSwitchFeaturesMqttPlugin
+from unifi_tools.plugins.features import FeaturesMqttPlugin
 from unifi_tools.version import __version__
 
 disable_warnings(InsecureRequestWarning)
@@ -52,7 +52,7 @@ class UniFiAPI:
         return _controller_url
 
     @staticmethod
-    def return_json(response) -> Optional[Tuple[list, dict]]:
+    def return_json(response, log: bool = True) -> Optional[Tuple[list, dict]]:
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
@@ -63,9 +63,10 @@ class UniFiAPI:
             data: dict = response.json()
             meta: dict = data.get("meta", {})
 
-            logger.debug(
-                "[API] [%s]%s %s", meta.get("rc"), f""" {meta["msg"]}""" if meta.get("msg") else "", response.url
-            )
+            if log is True:
+                logger.debug(
+                    "[API] [%s]%s %s", meta.get("rc"), f""" {meta["msg"]}""" if meta.get("msg") else "", response.url
+                )
 
             return data.get("data", []), meta
         except requests.exceptions.JSONDecodeError:
@@ -112,14 +113,14 @@ class UniFiAPI:
         logger.info("[API] Successfully logged out")
         self._logged_in = False
 
-    def list_all_devices(self) -> Optional[List[dict]]:
+    def list_all_devices(self, log: bool = True) -> Optional[List[dict]]:
         response = self._session.get(
             f"{self.controller_url}/api/s/default/stat/device",
             headers=self._headers,
             verify=False,
         )
 
-        result: Optional[Tuple[list, dict]] = self.return_json(response)
+        result: Optional[Tuple[list, dict]] = self.return_json(response, log=log)
 
         if result is None:
             return None
@@ -127,7 +128,7 @@ class UniFiAPI:
         self._reconnect(meta=result[1], func_name="list_all_devices")
         devices_data: List[dict] = result[0]
 
-        if devices_data:
+        if devices_data and log is True:
             logger.debug("[API] [list_all_devices] %s", devices_data)
 
         return devices_data
@@ -165,20 +166,20 @@ class UniFiSwitch:
         self.features: FeatureMap = unifi_devices.features
         self.device_info: dict = device_info
 
-    def _parse_feature_port(self, port):
+    def _parse_feature_port(self, port_info: dict):
         self.features.register(
             UniFiSwitchPort(
                 config=self.config,
                 unifi_devices=self.unifi_devices,
-                short_name=UniFiFeatureConst.PORT,
+                short_name=FeatureConst.PORT,
                 device_info=self.device_info,
-                port_idx=port["port_idx"],
+                port_idx=port_info["port_idx"],
             )
         )
 
     def parse_features(self):
-        for port in self.device_info.get("port_overrides"):
-            self._parse_feature_port(port)
+        for port_info in self.device_info.get("port_overrides"):
+            self._parse_feature_port(port_info)
 
 
 class UniFiDevices:
@@ -186,9 +187,10 @@ class UniFiDevices:
         self.config: Config = config
         self.unifi_api: UniFiAPI = unifi_api
         self.features = FeatureMap()
+        self.cached_devices: List[dict] = []
 
-    def get_device_info(self, device_id: str) -> Optional[dict]:
-        list_all_devices: Optional[List[dict]] = self.unifi_api.list_all_devices()
+    def get_device_info(self, device_id: str, log: bool = True) -> Optional[dict]:
+        list_all_devices: Optional[List[dict]] = self.unifi_api.list_all_devices(log=log)
 
         if list_all_devices is None:
             logger.debug("[API] Can't read device info!")
@@ -202,25 +204,28 @@ class UniFiDevices:
 
         return None
 
-    def get_device_port_info(self, device_id: str) -> Optional[List[dict]]:
-        device_info: Optional[dict] = self.get_device_info(device_id=device_id)
+    def get_device_port_info(self, device_id: str, log: bool = True) -> Optional[List[dict]]:
+        device_info: Optional[dict] = self.get_device_info(device_id=device_id, log=log)
 
         if device_info:
             return device_info.get("port_overrides")
 
         return None
 
-    def update_device_port_info(self, device_id: str, port_overrides: List[dict]) -> bool:
-        return self.unifi_api.update_device(device_id=device_id, port_overrides=port_overrides)
+    def update_device_port_info(self, device_id: str, port_overrides: List[dict]):
+        self.unifi_api.update_device(device_id=device_id, port_overrides=port_overrides)
+
+    def scan(self):
+        self.cached_devices = self.unifi_api.list_all_devices(log=False)
 
     def read_devices(self):
         logger.info("[API] Reading adopted devices.")
-        list_all_devices: Optional[dict] = self.unifi_api.list_all_devices()
+        self.scan()
 
-        if list_all_devices is None:
+        if self.cached_devices is None:
             logger.debug("[API] Can't read adopted devices!")
         else:
-            adopted_devices_list: List[dict] = [device for device in list_all_devices if device.get("adopted")]
+            adopted_devices_list: List[dict] = [device for device in self.cached_devices if device.get("adopted")]
 
             for device_info in adopted_devices_list:
                 if device_info.get("port_overrides"):
@@ -256,7 +261,7 @@ class UniFiTools:
 
             logger.info("[MQTT] Connected to broker at '%s:%s'", self.config.mqtt.host, self.config.mqtt.port)
 
-            features = UniFiSwitchFeaturesMqttPlugin(features=self.unifi_devices.features, mqtt_client=mqtt_client)
+            features = FeaturesMqttPlugin(unifi_devices=self.unifi_devices, mqtt_client=mqtt_client)
             features_tasks = await features.init_tasks(stack)
             tasks.update(features_tasks)
 
@@ -268,19 +273,12 @@ class UniFiTools:
             await asyncio.gather(*tasks)
 
     @staticmethod
-    async def exit():
-        loop = asyncio.get_event_loop()
-        loop.stop()
-
-    @staticmethod
     def cancel_tasks():
         for task in asyncio.all_tasks():
             if task.done():
                 continue
 
             task.cancel()
-
-        asyncio.ensure_future(exit())
 
     async def run(self):
         self.unifi_devices.read_devices()
@@ -347,6 +345,7 @@ def main():
             except asyncio.CancelledError:
                 pass
             finally:
+                loop.close()
                 unifi_api.logout()
                 logger.info("Successfully shutdown the UniFi Tools service.")
     except KeyboardInterrupt:

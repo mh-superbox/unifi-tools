@@ -76,7 +76,7 @@ class Feature(ABC):
         return changed
 
 
-class UniFiSwitchPort(Feature):
+class FeaturePort(Feature):
     name: str = "Port"
 
     def __init__(self, config: Config, unifi_devices, short_name: str, device_info: dict, port_idx: int):

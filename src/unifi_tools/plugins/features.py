@@ -85,9 +85,7 @@ class FeaturesMqttPlugin(BaseFeaturesMqttPlugin):
         while True:
             self.unifi_devices.scan()
 
-            features = self.features.by_feature_type(self.publish_feature_types)
-
-            for feature in features:
+            for feature in self.features.by_feature_type(self.publish_feature_types):
                 if feature.changed:
                     topic: str = f"{feature.topic}/get"
                     await self.mqtt_client.publish(topic, feature.state, qos=1, retain=True)

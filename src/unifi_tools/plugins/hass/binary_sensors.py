@@ -3,75 +3,67 @@ import json
 from asyncio import Task
 from dataclasses import asdict
 from typing import Any
-from typing import Optional
+from typing import List
 from typing import Set
 from typing import Tuple
 
-from config import Config
-from config import HardwareData
-from config import logger
-
+from unifi_tools.config import Config
 from unifi_tools.config import LOG_MQTT_PUBLISH
+from unifi_tools.config import logger
+from unifi_tools.features import FeatureConst
+from unifi_tools.features import FeatureMap
 from unifi_tools.plugins.hass.discover import HassBaseDiscovery
+from unifi_tools.unifi import UniFiDevices
 
 
 class HassBinarySensorsDiscovery(HassBaseDiscovery):
-    def __init__(self, uc, mqtt_client):
-        self.config: Config = uc.config
-        self.hardware: HardwareData = uc.neuron.hardware
+    publish_feature_types: List[str] = [FeatureConst.PORT]
 
-        self._uc = uc
-        self._mqtt_client = mqtt_client
+    def __init__(self, unifi_devices: UniFiDevices, mqtt_client):
+        self.config: Config = unifi_devices.config
+        self.unifi_devices: UniFiDevices = unifi_devices
+        self.mqtt_client = mqtt_client
+        self.features: FeatureMap = unifi_devices.features
 
-        super().__init__(config=uc.config)
+        super().__init__(config=unifi_devices.config)
 
     def _get_discovery(self, feature) -> Tuple[str, dict]:
-        topic: str = f"{self.config.homeassistant.discovery_prefix}/binary_sensor/{self.config.device_name.lower()}/{feature.circuit}/config"
-        suggested_area: Optional[str] = self._get_suggested_area(feature)
-        invert_state: bool = self._get_invert_state(feature)
-        device_name: str = self.config.device_name
-
-        if suggested_area:
-            device_name = f"{device_name}: {suggested_area}"
+        topic: str = f"{self.config.homeassistant.discovery_prefix}/binary_sensor/{feature.topic}/config"
 
         message: dict = {
-            "name": self._get_friendly_name(feature),
-            "unique_id": f"{self.config.device_name.lower()}_{feature.circuit}",
+            "name": f"{feature.friendly_name}",
+            "unique_id": f"{self.config.device_name.lower()}-{feature.unique_id}",
             "state_topic": f"{feature.topic}/get",
+            "value_template": "{{ 'OFF' if value_json.poe_mode == 'off' else 'ON' }}",
             "qos": 2,
             "device": {
-                "name": device_name,
-                "identifiers": device_name,
-                "model": f"""{self.hardware["neuron"]["name"]} {self.hardware["neuron"]["model"]}""",
-                "sw_version": self._uc.neuron.boards[feature.major_group - 1].firmware,
-                "suggested_area": suggested_area,
-                **asdict(self.config.homeassistant.device_info),
+                "name": feature.unifi_device.info["name"],
+                "identifiers": feature.unifi_device.id,
+                "model": feature.unifi_device.info["model"],
+                "sw_version": feature.unifi_device.info["version"],
+                **asdict(self.config.homeassistant.device),
             },
         }
-
-        if invert_state:
-            message.update(
-                {
-                    "payload_on": "OFF",
-                    "payload_off": "ON",
-                }
-            )
 
         return topic, message
 
     async def publish(self):
-        for feature in self._uc.neuron.features.by_feature_name(["DI"]):
+        for feature in self.features.by_feature_type(self.publish_feature_types):
+            # TODO Refactor when multiple feature types exists!
+            if not feature.poe_mode:
+                continue
+
             topic, message = self._get_discovery(feature)
             json_data: str = json.dumps(message)
-            await self._mqtt_client.publish(topic, json_data, qos=2, retain=True)
+            await self.mqtt_client.publish(topic, json_data, qos=2, retain=True)
             logger.debug(LOG_MQTT_PUBLISH, topic, json_data)
 
 
 class HassBinarySensorsMqttPlugin:
     """Provide Home Assistant MQTT commands for binary sensors."""
 
-    def __init__(self, uc, mqtt_client):
-        self._hass = HassBinarySensorsDiscovery(uc, mqtt_client)
+    def __init__(self, unifi_devices, mqtt_client):
+        self._hass = HassBinarySensorsDiscovery(unifi_devices, mqtt_client)
 
     async def init_tasks(self) -> Set[Task]:
         tasks: Set[Task] = set()

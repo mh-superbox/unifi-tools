@@ -44,6 +44,9 @@ class UniFiCachedDeviceMap(DataStorage):
 
             self.data[device_id] = {
                 "ports": ports,
+                "name": device_info["name"],
+                "model": device_info["model"],
+                "version": device_info["version"],
             }
 
 

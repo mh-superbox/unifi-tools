@@ -20,6 +20,7 @@ class FeaturePoEState:
 
 class FeatureConst:
     PORT: Final[str] = "port"
+    POE: Final[str] = "PoE"
     POE_MODE: Final[str] = "poe_mode"
     PORT_IDX: Final[str] = "port_idx"
     POE_MODES: Final[tuple] = (
@@ -61,6 +62,11 @@ class Feature(ABC):
 
     @property
     @abstractmethod
+    def unique_id(self) -> str:
+        return ""
+
+    @property
+    @abstractmethod
     def topic(self) -> str:
         return ""
 
@@ -91,15 +97,17 @@ class FeaturePort(Feature):
         self.port_idx: int = port_idx
 
     @property
+    def poe_mode(self) -> str:
+        device_info = self.unifi_devices.cached_devices.get(self.unifi_device.id)
+        port = device_info["ports"][self.port_idx]
+        return self._get_real_poe_mode(poe_mode=port.poe_mode)
+
+    @property
     def value(self) -> dict:
         _value: dict = {}
 
-        device_info = self.unifi_devices.cached_devices.get(self.unifi_device.id)
-        port = device_info["ports"][self.port_idx]
-        poe_mode = self._get_real_poe_mode(poe_mode=port.poe_mode)
-
-        if poe_mode:
-            _value[FeatureConst.POE_MODE] = poe_mode
+        if self.poe_mode:
+            _value[FeatureConst.POE_MODE] = self.poe_mode
 
         return _value
 
@@ -109,13 +117,15 @@ class FeaturePort(Feature):
 
     @property
     def friendly_name(self) -> str:
-        return f"{self.name} #{self.port_idx}"
+        return f"{self.name} #{self.port_idx:02d} {FeatureConst.POE}"
+
+    @property
+    def unique_id(self) -> str:
+        return f"{self.unifi_device.id}-{self.feature_name}-{self.port_idx}"
 
     @property
     def topic(self) -> str:
-        topic: str = f"""{self.config.device_name.lower()}/{self.unifi_device.id}/{self.feature_name}/{self.port_idx}"""
-
-        return topic
+        return f"{self.config.device_name.lower()}/{self.unique_id}"
 
     def _get_real_poe_mode(self, poe_mode: str) -> str:
         # When state is "on" then check settings if PoE for this port is "auto" or "pasv24".

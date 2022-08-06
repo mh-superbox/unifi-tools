@@ -19,6 +19,7 @@ from unifi_tools.config import Config
 from unifi_tools.config import logger
 from unifi_tools.helpers import cancel_tasks
 from unifi_tools.plugins.features import FeaturesMqttPlugin
+from unifi_tools.plugins.hass.binary_sensors import HassBinarySensorsMqttPlugin
 from unifi_tools.unifi import UniFiAPI
 from unifi_tools.unifi import UniFiDevices
 from unifi_tools.version import __version__
@@ -56,10 +57,13 @@ class UniFiTools:
             features_tasks = await features.init_tasks(stack)
             tasks.update(features_tasks)
 
-            # if self.config.homeassistant.enabled:
-            #     hass_binary_sensors_plugin = HassBinarySensorsMqttPlugin(self, mqtt_client)
-            #     hass_binary_sensors_tasks = await hass_binary_sensors_plugin.init_tasks()
-            #     tasks.update(hass_binary_sensors_tasks)
+            if self.config.homeassistant.enabled:
+                hass_binary_sensors_plugin = HassBinarySensorsMqttPlugin(
+                    unifi_devices=self.unifi_devices, mqtt_client=mqtt_client
+                )
+
+                hass_binary_sensors_tasks = await hass_binary_sensors_plugin.init_tasks()
+                tasks.update(hass_binary_sensors_tasks)
 
             await asyncio.gather(*tasks)
 

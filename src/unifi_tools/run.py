@@ -18,6 +18,7 @@ from urllib3.exceptions import InsecureRequestWarning
 from unifi_tools.config import Config
 from unifi_tools.config import logger
 from unifi_tools.plugins.features import FeaturesMqttPlugin
+from unifi_tools.unifi import UniFiAPI
 from unifi_tools.unifi import UniFiDevices
 from unifi_tools.version import __version__
 
@@ -134,7 +135,6 @@ def main():
             except asyncio.CancelledError:
                 pass
             finally:
-                loop.close()
                 unifi_api.logout()
                 logger.info("Successfully shutdown the UniFi Tools service.")
     except KeyboardInterrupt:

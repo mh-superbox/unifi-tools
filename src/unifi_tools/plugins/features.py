@@ -26,7 +26,6 @@ class BaseFeaturesMqttPlugin(ABC):
         self.unifi_devices = unifi_devices
         self.mqtt_client = mqtt_client
         self.features: FeatureMap = unifi_devices.features
-        self.cached_devices: List[dict] = unifi_devices.cached_devices
 
     async def init_tasks(self, stack: AsyncExitStack) -> Set[Task]:
         tasks: Set[Task] = set()

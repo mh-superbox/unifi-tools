@@ -24,6 +24,7 @@ from unifi_tools.helpers import cancel_tasks
 
 class UniFiPort(NamedTuple):
     idx: int
+    name: str
     poe_mode: Optional[str]
 
 
@@ -39,6 +40,7 @@ class UniFiCachedDeviceMap(DataStorage):
             for port in device_info.get("port_overrides", []):
                 ports[port[FeatureConst.PORT_IDX]] = UniFiPort(
                     idx=port[FeatureConst.PORT_IDX],
+                    name=port.get(FeatureConst.PORT_NAME),
                     poe_mode=port.get(FeatureConst.POE_MODE),
                 )
 
@@ -277,17 +279,17 @@ class UniFiSwitch:
         self.unifi_devices: UniFiDevices = unifi_devices
         self.unifi_device: UniFiDevice = unifi_device
 
-    def _parse_feature_port(self, port_idx: int):
+    def _parse_feature_port(self, port_info: UniFiPort):
         self.features.register(
             FeaturePort(
                 config=self.config,
                 unifi_devices=self.unifi_devices,
                 short_name=FeatureConst.PORT,
                 unifi_device=self.unifi_device,
-                port_idx=port_idx,
+                port_info=port_info,
             )
         )
 
     def parse_features(self):
-        for port_idx in self.unifi_device.info["ports"].keys():
-            self._parse_feature_port(port_idx)
+        for port_info in self.unifi_device.info["ports"].values():
+            self._parse_feature_port(port_info=port_info)

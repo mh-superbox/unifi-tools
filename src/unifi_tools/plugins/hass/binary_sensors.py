@@ -30,6 +30,7 @@ class HassBinarySensorsDiscovery(HassBaseDiscovery):
     def _get_discovery(self, feature) -> Tuple[str, dict]:
         topic: str = f"{self.config.homeassistant.discovery_prefix}/binary_sensor/{feature.topic}/config"
 
+        # TODO: add extra json attribute for real PoE state
         message: dict = {
             "name": f"{feature.friendly_name}",
             "unique_id": f"{self.config.device_name.lower()}-{feature.unique_id}",

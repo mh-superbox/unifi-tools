@@ -23,6 +23,7 @@ class FeatureConst:
     POE: Final[str] = "PoE"
     POE_MODE: Final[str] = "poe_mode"
     PORT_IDX: Final[str] = "port_idx"
+    PORT_NAME: Final[str] = "name"
     POE_MODES: Final[tuple] = (
         FeaturePoEState.ON,
         FeaturePoEState.OFF,
@@ -87,19 +88,19 @@ class Feature(ABC):
 class FeaturePort(Feature):
     name: str = "Port"
 
-    def __init__(self, config: Config, unifi_devices, unifi_device, short_name: str, port_idx: int):
+    def __init__(self, config: Config, unifi_devices, unifi_device, short_name: str, port_info):
         super().__init__(
             config=config,
             unifi_devices=unifi_devices,
             unifi_device=unifi_device,
             short_name=short_name,
         )
-        self.port_idx: int = port_idx
+        self.port_info = port_info
 
     @property
     def poe_mode(self) -> str:
         device_info = self.unifi_devices.cached_devices.get(self.unifi_device.id)
-        port = device_info["ports"][self.port_idx]
+        port = device_info["ports"][self.port_info.idx]
         poe_mode: str = port.poe_mode
 
         if poe_mode in [FeaturePoEState.POE24V, FeaturePoEState.POE]:
@@ -122,11 +123,14 @@ class FeaturePort(Feature):
 
     @property
     def friendly_name(self) -> str:
-        return f"{self.name} #{self.port_idx:02d} {FeatureConst.POE}"
+        if self.port_info.name:
+            return self.port_info.name
+
+        return f"{self.name} #{self.port_info.idx:02d} {FeatureConst.POE}"
 
     @property
     def unique_id(self) -> str:
-        return f"{self.unifi_device.id}-{self.feature_name}-{self.port_idx}"
+        return f"{self.unifi_device.id}-{self.feature_name}-{self.port_info.idx}"
 
     @property
     def topic(self) -> str:
@@ -139,7 +143,7 @@ class FeaturePort(Feature):
             poe_mode = FeaturePoEState.POE
 
             for port in feature.get("ports", []):
-                if port.get(FeatureConst.PORT_IDX) == self.port_idx:
+                if port.get(FeatureConst.PORT_IDX) == self.port_info.idx:
                     poe_mode = port.get(FeatureConst.POE_MODE, FeaturePoEState.POE)
                     break
 
@@ -167,7 +171,7 @@ class FeaturePort(Feature):
                 update_devices: bool = False
 
                 for port in port_overrides:
-                    if port[FeatureConst.PORT_IDX] == self.port_idx:
+                    if port[FeatureConst.PORT_IDX] == self.port_info.idx:
                         update_devices = self._set_port_poe(port, value[FeatureConst.POE_MODE])
                         break
 

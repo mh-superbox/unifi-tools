@@ -100,7 +100,12 @@ class FeaturePort(Feature):
     def poe_mode(self) -> str:
         device_info = self.unifi_devices.cached_devices.get(self.unifi_device.id)
         port = device_info["ports"][self.port_idx]
-        return self._get_real_poe_mode(poe_mode=port.poe_mode)
+        poe_mode: str = port.poe_mode
+
+        if poe_mode in [FeaturePoEState.POE24V, FeaturePoEState.POE]:
+            poe_mode = FeaturePoEState.ON
+
+        return poe_mode
 
     @property
     def value(self) -> dict:

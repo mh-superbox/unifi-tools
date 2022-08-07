@@ -130,7 +130,7 @@ class FeaturePort(Feature):
 
     @property
     def unique_id(self) -> str:
-        return f"{self.unifi_device.id}-{self.feature_name}-{self.port_info.idx}"
+        return f"{self.unifi_device.id}-{self.feature_name.lower()}-{self.port_info.idx}"
 
     @property
     def topic(self) -> str:

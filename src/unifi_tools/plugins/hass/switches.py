@@ -33,6 +33,7 @@ class HassSwitchesDiscovery(HassBaseDiscovery):
         message = {
             "name": f"{feature.friendly_name}",
             "unique_id": f"{self.config.device_name.lower()}-{feature.unique_id}",
+            "object_id": f"{self.config.device_name.lower()}-{feature.unique_id}",
             "command_topic": f"{feature.topic}/set",
             "state_topic": f"{feature.topic}/get",
             "value_template": "{{ value_json.poe_mode }}",

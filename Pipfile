@@ -20,6 +20,8 @@ pytest = "*"
 pytest-cov = "*"
 types-pyyaml = "*"
 types-requests = "*"
+pytest-mock = "*"
+responses = "*"
 
 [requires]
 python_version = "3.8"

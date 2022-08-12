@@ -120,7 +120,7 @@ devices_json_response: str = """{
                     "autoneg": true
                 },
                 {
-                    "name": "Port 8",
+                    "name": "MOCKED Port 8",
                     "port_idx": 8,
                     "poe_mode": "auto",
                     "portconf_id": "6070c964a61f7408a770605c"
@@ -2229,7 +2229,7 @@ devices_not_adopted_json_response: str = """{
                     "autoneg": true
                 },
                 {
-                    "name": "Port 8",
+                    "name": "MOCKED Port 8",
                     "port_idx": 8,
                     "poe_mode": "auto",
                     "portconf_id": "6070c964a61f7408a770605c"
@@ -4393,7 +4393,7 @@ port_overrides_payload: str = """{
             "port_security_mac_address": [],
             "stp_port_mode": true,
             "poe_mode": "off",
-            "name": "Port 19",
+            "name": "MOCKED Port 19",
             "portconf_id": "60c0bd9d0da23303beb7f793",
             "port_idx": 19
         },

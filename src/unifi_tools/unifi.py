@@ -242,9 +242,7 @@ class UniFiDevices:
         result, response = self.unifi_api.list_all_devices()
         device_info: Optional[dict] = None
 
-        if result is None:
-            self._logger.debug("[API] Can't read device info!")
-        else:
+        if result:
             adopted_devices_list: List[dict] = [
                 device for device in result.data if device.get("adopted") and device.get("_id") == device_id
             ]

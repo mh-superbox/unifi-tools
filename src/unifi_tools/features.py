@@ -5,7 +5,6 @@ from abc import abstractmethod
 from collections.abc import Iterator
 from typing import Final
 from typing import List
-from typing import Optional
 
 from unifi_tools.config import Config
 from unifi_tools.helpers import DataStorage
@@ -39,6 +38,7 @@ class Feature(ABC):
         self.config: Config = config
         self.unifi_devices = unifi_devices
         self.unifi_device = unifi_device
+        self.unifi_api = unifi_devices.unifi_api
         self.short_name: str = short_name
 
         self._value: dict = {}
@@ -99,7 +99,7 @@ class FeaturePort(Feature):
 
     @property
     def poe_mode(self) -> str:
-        device_info = self.unifi_devices.cached_devices.get(self.unifi_device.id)
+        device_info = self.unifi_devices.unifi_device_map.get(self.unifi_device.id)
         port = device_info["ports"][self.port_info.idx]
         poe_mode: str = port.poe_mode
 
@@ -126,7 +126,7 @@ class FeaturePort(Feature):
         if self.port_info.name:
             return self.port_info.name
 
-        return f"{self.name} #{self.port_info.idx:02d} {FeatureConst.POE}"
+        return f"{self.name} #{self.port_info.idx:02d}"
 
     @property
     def unique_id(self) -> str:
@@ -165,20 +165,21 @@ class FeaturePort(Feature):
 
     async def set_state(self, value: dict):
         if FeatureConst.POE_MODE in value.keys():
-            port_overrides: Optional[List[dict]] = self.unifi_devices.get_device_port_info(self.unifi_device.id)
+            port_overrides: list = self.unifi_api.get_device_info(device_id=self.unifi_device.id).get(
+                "port_overrides", []
+            )
 
-            if port_overrides:
-                update_devices: bool = False
+            update_devices: bool = False
 
-                for port in port_overrides:
-                    if port[FeatureConst.PORT_IDX] == self.port_info.idx:
-                        update_devices = self._set_port_poe(port, value[FeatureConst.POE_MODE])
-                        break
+            for port in port_overrides:
+                if port[FeatureConst.PORT_IDX] == self.port_info.idx:
+                    update_devices = self._set_port_poe(port, value[FeatureConst.POE_MODE])
+                    break
 
-                if update_devices:
-                    self.unifi_devices.update_device_port_info(
-                        device_id=self.unifi_device.id, port_overrides={"port_overrides": port_overrides}
-                    )
+            if update_devices:
+                self.unifi_api.update_device(
+                    device_id=self.unifi_device.id, port_overrides={"port_overrides": port_overrides}
+                )
 
 
 class FeatureMap(DataStorage):

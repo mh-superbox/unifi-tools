@@ -19,7 +19,6 @@ from unifi_tools.features import FeatureMap
 from unifi_tools.features import FeaturePort
 from unifi_tools.helpers import DataStorage
 from unifi_tools.helpers import cancel_tasks
-from unifi_tools.helpers import set_asyncio_logging
 
 
 class UniFiPort(NamedTuple):
@@ -28,28 +27,26 @@ class UniFiPort(NamedTuple):
     poe_mode: Optional[str]
 
 
-class UniFiCachedDeviceMap(DataStorage):
+class UniFiDeviceMap(DataStorage):
     def initialise(self, device_infos: List[dict]):
         for device_info in device_infos:
-            if device_info.get("adopted") is False:
-                continue
+            if device_info.get("adopted") is True:
+                device_id: str = device_info.pop("_id")
+                ports: Dict[str, UniFiPort] = {}
 
-            device_id: str = device_info.pop("_id")
-            ports: Dict[str, UniFiPort] = {}
+                for port in device_info.get("port_overrides", []):
+                    ports[port[FeatureConst.PORT_IDX]] = UniFiPort(
+                        idx=port[FeatureConst.PORT_IDX],
+                        name=port.get(FeatureConst.PORT_NAME),
+                        poe_mode=port.get(FeatureConst.POE_MODE),
+                    )
 
-            for port in device_info.get("port_overrides", []):
-                ports[port[FeatureConst.PORT_IDX]] = UniFiPort(
-                    idx=port[FeatureConst.PORT_IDX],
-                    name=port.get(FeatureConst.PORT_NAME),
-                    poe_mode=port.get(FeatureConst.POE_MODE),
-                )
-
-            self.data[device_id] = {
-                "ports": ports,
-                "name": device_info["name"],
-                "model": device_info["model"],
-                "version": device_info["version"],
-            }
+                self.data[device_id] = {
+                    "ports": ports,
+                    "name": device_info["name"],
+                    "model": device_info["model"],
+                    "version": device_info["version"],
+                }
 
 
 class UniFiAPIResult(NamedTuple):
@@ -82,8 +79,6 @@ class UniFiAPI:
         self._logged_in: bool = False
         self._login: Optional[Response] = None
         self._logger = logging.getLogger(__name__)
-
-        set_asyncio_logging()
 
         self._headers: Dict[str, str] = {
             "Accept": "application/json",
@@ -233,14 +228,15 @@ class UniFiDevice(NamedTuple):
 class UniFiDevices:
     def __init__(self, unifi_api: UniFiAPI):
         self.unifi_api: UniFiAPI = unifi_api
-        self.config: Config = unifi_api.config
+        self.unifi_device_map = UniFiDeviceMap()
         self.features = FeatureMap()
-        self.cached_devices = UniFiCachedDeviceMap()
+        self.config: Config = unifi_api.config
+
         self._logger = logging.getLogger(__name__)
 
-    def get_device_info(self, device_id: str) -> Optional[dict]:
+    def get_device_info(self, device_id: str) -> dict:
         result, response = self.unifi_api.list_all_devices()
-        device_info: Optional[dict] = None
+        device_info: dict = {}
 
         if result:
             adopted_devices_list: List[dict] = [
@@ -252,35 +248,22 @@ class UniFiDevices:
 
         return device_info
 
-    def get_device_port_info(self, device_id: str) -> Optional[List[dict]]:
-        device_info: Optional[dict] = self.get_device_info(device_id=device_id)
-
-        if device_info:
-            return device_info.get("port_overrides")
-
-        return None
-
-    def update_device_port_info(self, device_id: str, port_overrides: Dict[str, list]):
-        self.unifi_api.update_device(device_id=device_id, port_overrides=port_overrides)
-
     def scan(self):
         result, response = self.unifi_api.list_all_devices(log=False)
 
         if result:
-            self.cached_devices.initialise(result.data)
+            self.unifi_device_map.initialise(result.data)
 
     def read_devices(self):
         self._logger.info("[API] Reading adopted devices.")
         self.scan()
 
-        if self.cached_devices is None:
+        if self.unifi_device_map is None:
             self._logger.debug("[API] Can't read adopted devices!")
         else:
-            for device_id, device_info in self.cached_devices.items():
+            for device_id, device_info in self.unifi_device_map.items():
                 if device_info["ports"]:
                     unifi_switch: UniFiSwitch = UniFiSwitch(
-                        config=self.config,
-                        features=self.features,
                         unifi_devices=self,
                         unifi_device=UniFiDevice(id=device_id, info=device_info),
                     )
@@ -289,9 +272,9 @@ class UniFiDevices:
 
 
 class UniFiSwitch:
-    def __init__(self, config: Config, features: FeatureMap, unifi_devices: UniFiDevices, unifi_device: UniFiDevice):
-        self.config: Config = config
-        self.features: FeatureMap = features
+    def __init__(self, unifi_devices: UniFiDevices, unifi_device: UniFiDevice):
+        self.config: Config = unifi_devices.config
+        self.features: FeatureMap = unifi_devices.features
         self.unifi_devices: UniFiDevices = unifi_devices
         self.unifi_device: UniFiDevice = unifi_device
 

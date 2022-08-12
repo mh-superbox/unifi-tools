@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 
 from unifi_tools.config import Config
@@ -9,5 +11,6 @@ def config() -> Config:
     config = Config()
 
     config.logging = LoggingConfig(level="debug")
+    logging.getLogger("asyncio").setLevel(logging.WARNING)
 
     return config

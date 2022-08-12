@@ -29,11 +29,11 @@ disable_warnings(InsecureRequestWarning)
 
 
 class UniFiTools:
-    def __init__(self, config: Config, unifi_devices: UniFiDevices):
-        self.config: Config = config
+    def __init__(self, unifi_devices: UniFiDevices):
         self.unifi_devices: UniFiDevices = unifi_devices
+        self.config: Config = unifi_devices.config
 
-        self._mqtt_client_id: str = f"{config.device_name.lower()}-{uuid.uuid4()}"
+        self._mqtt_client_id: str = f"{self.config.device_name.lower()}-{uuid.uuid4()}"
         logger.info("[MQTT] Client ID: %s", self._mqtt_client_id)
 
         self._retry_reconnect: int = 0
@@ -133,8 +133,8 @@ def main():
             unifi_api = UniFiAPI(config=config)
             unifi_api.login()
 
-            unifi_devices = UniFiDevices(config=config, unifi_api=unifi_api)
-            unifi_tools = UniFiTools(config=config, unifi_devices=unifi_devices)
+            unifi_devices = UniFiDevices(unifi_api=unifi_api)
+            unifi_tools = UniFiTools(unifi_devices=unifi_devices)
 
             for sig in (signal.SIGINT, signal.SIGTERM):
                 loop.add_signal_handler(sig, cancel_tasks)

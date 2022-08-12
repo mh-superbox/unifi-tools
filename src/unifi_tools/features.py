@@ -165,7 +165,7 @@ class FeaturePort(Feature):
 
     async def set_state(self, value: dict):
         if FeatureConst.POE_MODE in value.keys():
-            port_overrides: list = self.unifi_api.get_device_info(device_id=self.unifi_device.id).get(
+            port_overrides: list = self.unifi_devices.get_device_info(device_id=self.unifi_device.id).get(
                 "port_overrides", []
             )
 

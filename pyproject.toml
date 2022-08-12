@@ -24,4 +24,4 @@ log_cli_level = "DEBUG"
 log_cli_format = "%(levelname)-8s | %(asctime)s: %(message)s"
 testpaths = ["tests"]
 pythonpath = ["src"]
-addopts = "--cov=src --cov-report=term-missing"
+# addopts = "--cov=src --cov-report=term-missing"

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from collections.abc import MutableMapping
 
 
@@ -39,3 +40,7 @@ def cancel_tasks():
             continue
 
         task.cancel()
+
+
+def set_asyncio_logging():
+    logging.getLogger("asyncio").setLevel(logging.WARNING)

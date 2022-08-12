@@ -19,6 +19,7 @@ from unifi_tools.features import FeatureMap
 from unifi_tools.features import FeaturePort
 from unifi_tools.helpers import DataStorage
 from unifi_tools.helpers import cancel_tasks
+from unifi_tools.helpers import set_asyncio_logging
 
 
 class UniFiPort(NamedTuple):
@@ -62,20 +63,6 @@ class UniFiAPI:
     STATE_DEVICE_ENDPOINT: Final[str] = "/api/s/default/stat/device"
     REST_DEVICE_ENDPOINT: Final[str] = "/api/s/default/rest/device"
 
-    def __init__(self, config: Config):
-        self.config: Config = config
-        self.rc: int = 0
-
-        self._session = requests.Session()
-        self._logged_in: bool = False
-        self._login: Optional[Response] = None
-        self._logger = logging.getLogger(__name__)
-
-        self._headers: Dict[str, str] = {
-            "Accept": "application/json",
-            "Content-Type": "application/json; charset=utf-8",
-        }
-
     @property
     def controller_url(self):
         _controller_url: str = f"https://{self.config.unifi_controller.url}"
@@ -85,67 +72,23 @@ class UniFiAPI:
 
         return _controller_url
 
-    def _exit(self, rc):
-        self.rc = rc
+    def __init__(self, config: Config):
+        self.config: Config = config
+        self.rc: int = 0
 
-        if asyncio.get_event_loop().is_running():
-            cancel_tasks()
-        else:
-            sys.exit(rc)
+        self._session = requests.Session()
+        self._session.hooks["response"].append(self._reconnect)
 
-    def _get_json(self, response, log: bool = True) -> Optional[UniFiAPIResult]:
-        try:
-            data: dict = json.loads(response.text)
-            meta: dict = data.get("meta", {})
+        self._logged_in: bool = False
+        self._login: Optional[Response] = None
+        self._logger = logging.getLogger(__name__)
 
-            meta_info: str = f"""[{meta.get("rc")}]{f" {meta['msg']}" if meta.get("msg") else ""} {response.url}"""
+        set_asyncio_logging()
 
-            if meta.get("rc") == "error" and response.status_code != 401:
-                raise requests.HTTPError(meta_info, response=response)
-            elif log is True:
-                self._logger.debug("[API] %s", meta_info)
-
-            return UniFiAPIResult(meta=meta, data=data.get("data", []))
-        except JSONDecodeError:
-            self._logger.error("[API] JSON decode error. API not available! Shutdown UniFi Tools.")
-            self._exit(1)
-
-        return None
-
-    def _request_url(
-        self,
-        url,
-        method: str,
-        headers: dict,
-        json: Optional[dict] = None,
-        log: bool = True,
-    ) -> Tuple[Optional[UniFiAPIResult], Optional[Response]]:
-        result: Optional[UniFiAPIResult] = None
-        response: Optional[Response] = None
-
-        try:
-            response = self._session.request(
-                method=method,
-                url=url,
-                headers=headers,
-                json=json,
-                verify=False,
-            )
-
-            if 500 <= response.status_code < 600:
-                raise requests.HTTPError(
-                    f"{response.status_code} Server Error: {response.reason} for url: {url}", response=response
-                )
-
-            result = self._get_json(response, log=log)
-        except requests.ConnectionError as e:
-            self._logger.debug("[API] %s", e)
-            # self._exit(1)
-        except requests.HTTPError as e:
-            self._logger.error("[API] %s", e)
-            self._exit(1)
-
-        return result, response
+        self._headers: Dict[str, str] = {
+            "Accept": "application/json",
+            "Content-Type": "application/json; charset=utf-8",
+        }
 
     def login(self) -> Tuple[Optional[UniFiAPIResult], Optional[Response]]:
         result, response = self._request_url(
@@ -167,19 +110,26 @@ class UniFiAPI:
 
         return result, response
 
-    def logout(self):
-        self._request_url(
+    def logout(self) -> Tuple[Optional[UniFiAPIResult], Optional[Response]]:
+        csrf_token: str = ""
+
+        if self._login:
+            csrf_token = self._login.cookies.get("csrf_token", "")
+
+        result, response = self._request_url(
             method="post",
             url=f"{self.controller_url}{self.LOGOUT_ENDPOINT}",
             headers={
-                "x-csrf-token": self._login.cookies.get("csrf_token"),
+                "x-csrf-token": csrf_token,
             },
         )
 
-        self._logger.info("[API] Successfully logged out")
+        self._logger.info("[API] Successfully logged out.")
         self._logged_in = False
 
-    def list_all_devices(self, log: bool = True) -> List[dict]:
+        return result, response
+
+    def list_all_devices(self, log: bool = True) -> Tuple[Optional[UniFiAPIResult], Optional[Response]]:
         result, response = self._request_url(
             method="get",
             url=f"{self.controller_url}{ self.STATE_DEVICE_ENDPOINT}",
@@ -187,18 +137,14 @@ class UniFiAPI:
             log=log,
         )
 
-        if result is None:
-            return []
+        if result and result.data and log is True:
+            self._logger.debug("[API] [list_all_devices] %s", result.data)
 
-        self._reconnect(response=response, func_name="list_all_devices")
-        devices_data: List[dict] = result.data
+        return result, response
 
-        if devices_data and log is True:
-            self._logger.debug("[API] [list_all_devices] %s", devices_data)
-
-        return devices_data
-
-    def update_device(self, device_id: str, port_overrides: Dict[str, list]):
+    def update_device(
+        self, device_id: str, port_overrides: Dict[str, list]
+    ) -> Tuple[Optional[UniFiAPIResult], Optional[Response]]:
         result, response = self._request_url(
             method="put",
             url=f"{self.controller_url}{self.REST_DEVICE_ENDPOINT}/{device_id}",
@@ -206,18 +152,75 @@ class UniFiAPI:
             json=port_overrides,
         )
 
-        if result is None:
-            return False
-
-        self._reconnect(response=response, func_name="update_device")
         self._logger.debug("[API] [update_device] %s", device_id)
 
-    def _reconnect(self, response: Optional[Response], func_name: str):
-        if response and response.status_code == 401:
+        return result, response
+
+    def _request_url(
+        self, url, method: str, headers: dict, json: Optional[dict] = None, log: bool = True
+    ) -> Tuple[Optional[UniFiAPIResult], Optional[Response]]:
+        result: Optional[UniFiAPIResult] = None
+        response: Optional[Response] = None
+
+        try:
+            response = self._session.request(
+                method=method,
+                url=url,
+                headers=headers,
+                json=json,
+                verify=False,
+            )
+
+            response.raise_for_status()
+        except requests.ConnectionError as e:
+            self._logger.debug("[API] %s", e)
+            self._exit(1)
+        except requests.HTTPError as e:
+            self._logger.error("[API] %s", e)
+            self._exit(1)
+        finally:
+            if response:
+                result = self._get_json(response)
+
+                if result:
+                    meta_info: str = f"""[{result.meta.get("rc")}]{f" {result.meta['msg']}" if result.meta.get("msg") else ""} {response.url}"""
+
+                    if log is True:
+                        self._logger.debug("[API] %s", meta_info)
+
+        return result, response
+
+    def _get_json(self, response: Response) -> Optional[UniFiAPIResult]:
+        try:
+            data = json.loads(response.text)
+            return UniFiAPIResult(meta=data.get("meta", {}), data=data.get("data", []))
+        except JSONDecodeError:
+            self._logger.error("[API] JSON decode error. API not available! Shutdown UniFi Tools.")
+            self._exit(1)
+
+        return None
+
+    def _reconnect(self, response: Response, *args, **kwargs):
+        if response.status_code == requests.codes.unauthorized:
+            data: dict = json.loads(response.text)
+            meta: dict = data.get("meta", {})
+
+            self._logger.debug(
+                "[API] %s", f"""[{meta.get("rc")}]{f" {meta['msg']}" if meta.get("msg") else ""} {response.url}"""
+            )
+
             self._logged_in = False
             self.login()
 
-            getattr(self, func_name)()
+            return self._session.send(response.request, verify=False)
+
+    def _exit(self, rc):
+        self.rc = rc
+
+        if asyncio.get_event_loop().is_running():
+            cancel_tasks()
+        else:
+            sys.exit(rc)
 
 
 class UniFiDevice(NamedTuple):
@@ -234,13 +237,13 @@ class UniFiDevices:
         self._logger = logging.getLogger(__name__)
 
     def get_device_info(self, device_id: str, log: bool = True) -> Optional[dict]:
-        list_all_devices: Optional[List[dict]] = self.unifi_api.list_all_devices(log=log)
+        result, response = self.unifi_api.list_all_devices(log=log)
 
-        if list_all_devices is None:
+        if result is None:
             self._logger.debug("[API] Can't read device info!")
         else:
             adopted_devices_list: List[dict] = [
-                device for device in list_all_devices if device.get("adopted") and device.get("_id") == device_id
+                device for device in result.data if device.get("adopted") and device.get("_id") == device_id
             ]
 
             if adopted_devices_list:
@@ -260,7 +263,10 @@ class UniFiDevices:
         self.unifi_api.update_device(device_id=device_id, port_overrides=port_overrides)
 
     def scan(self):
-        self.cached_devices.initialise(self.unifi_api.list_all_devices(log=False))
+        result, response = self.unifi_api.list_all_devices(log=False)
+
+        if result:
+            self.cached_devices.initialise(result.data)
 
     def read_devices(self):
         self._logger.info("[API] Reading adopted devices.")

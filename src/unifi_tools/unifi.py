@@ -191,14 +191,16 @@ class UniFiAPI:
         return result, response
 
     def _get_json(self, response: Response) -> Optional[UniFiAPIResult]:
+        result: Optional[UniFiAPIResult] = None
+
         try:
             data = json.loads(response.text)
-            return UniFiAPIResult(meta=data.get("meta", {}), data=data.get("data", []))
+            result = UniFiAPIResult(meta=data.get("meta", {}), data=data.get("data", []))
         except JSONDecodeError:
             self._logger.error("[API] JSON decode error. API not available! Shutdown UniFi Tools.")
             self._exit(1)
 
-        return None
+        return result
 
     def _reconnect(self, response: Response, *args, **kwargs):
         if response.status_code == requests.codes.unauthorized:
@@ -229,15 +231,16 @@ class UniFiDevice(NamedTuple):
 
 
 class UniFiDevices:
-    def __init__(self, config: Config, unifi_api: UniFiAPI):
-        self.config: Config = config
+    def __init__(self, unifi_api: UniFiAPI):
         self.unifi_api: UniFiAPI = unifi_api
+        self.config: Config = unifi_api.config
         self.features = FeatureMap()
         self.cached_devices = UniFiCachedDeviceMap()
         self._logger = logging.getLogger(__name__)
 
-    def get_device_info(self, device_id: str, log: bool = True) -> Optional[dict]:
-        result, response = self.unifi_api.list_all_devices(log=log)
+    def get_device_info(self, device_id: str) -> Optional[dict]:
+        result, response = self.unifi_api.list_all_devices()
+        device_info: Optional[dict] = None
 
         if result is None:
             self._logger.debug("[API] Can't read device info!")
@@ -247,12 +250,12 @@ class UniFiDevices:
             ]
 
             if adopted_devices_list:
-                return adopted_devices_list[0]
+                device_info = adopted_devices_list[0]
 
-        return None
+        return device_info
 
-    def get_device_port_info(self, device_id: str, log: bool = True) -> Optional[List[dict]]:
-        device_info: Optional[dict] = self.get_device_info(device_id=device_id, log=log)
+    def get_device_port_info(self, device_id: str) -> Optional[List[dict]]:
+        device_info: Optional[dict] = self.get_device_info(device_id=device_id)
 
         if device_info:
             return device_info.get("port_overrides")

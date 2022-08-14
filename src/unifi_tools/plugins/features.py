@@ -78,7 +78,7 @@ class FeaturesMqttPlugin(BaseFeaturesMqttPlugin):
                 logger.error(LOG_MQTT_INVALIDE_SUBSCRIBE, topic, value)
 
             if data:
-                await feature.set_state(data)
+                feature.set_state(data)
                 logger.info(LOG_MQTT_SUBSCRIBE, topic, value)
 
     async def _publish(self):

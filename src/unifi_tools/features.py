@@ -34,12 +34,11 @@ class FeatureConst:
 class Feature(ABC):
     name: str = "Feature"
 
-    def __init__(self, config: Config, unifi_devices, unifi_device, short_name: str):
-        self.config: Config = config
+    def __init__(self, unifi_devices, unifi_device):
+        self.config: Config = unifi_devices.config
         self.unifi_devices = unifi_devices
         self.unifi_device = unifi_device
         self.unifi_api = unifi_devices.unifi_api
-        self.short_name: str = short_name
 
         self._value: dict = {}
 
@@ -88,12 +87,10 @@ class Feature(ABC):
 class FeaturePort(Feature):
     name: str = "Port"
 
-    def __init__(self, config: Config, unifi_devices, unifi_device, short_name: str, port_info):
+    def __init__(self, unifi_devices, unifi_device, port_info):
         super().__init__(
-            config=config,
             unifi_devices=unifi_devices,
             unifi_device=unifi_device,
-            short_name=short_name,
         )
         self.port_info = port_info
 
@@ -163,7 +160,7 @@ class FeaturePort(Feature):
 
         return False
 
-    async def set_state(self, value: dict):
+    def set_state(self, value: dict):
         if FeatureConst.POE_MODE in value.keys():
             port_overrides: list = self.unifi_devices.get_device_info(device_id=self.unifi_device.id).get(
                 "port_overrides", []
@@ -184,10 +181,10 @@ class FeaturePort(Feature):
 
 class FeatureMap(DataStorage):
     def register(self, feature: Feature):
-        if not self.data.get(feature.short_name):
-            self.data[feature.short_name] = []
+        if not self.data.get(feature.feature_name):
+            self.data[feature.feature_name] = []
 
-        self.data[feature.short_name].append(feature)
+        self.data[feature.feature_name].append(feature)
 
     def by_feature_type(self, feature_type: List[str]) -> Iterator:
         return itertools.chain.from_iterable(filter(None, map(self.data.get, feature_type)))

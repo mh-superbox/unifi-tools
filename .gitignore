@@ -1,6 +1,7 @@
 *.egg
 *.egg-info
 *.pyc
+.coverage
 .DS_Store
 .mypy_cache
 .pytest_cache

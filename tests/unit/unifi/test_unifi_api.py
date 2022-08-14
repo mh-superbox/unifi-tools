@@ -41,7 +41,7 @@ class TestHappyPathUniFiApi(TestUniFiApi):
         assert expected == unifi_api.controller_url
 
     @responses.activate
-    def test_login(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture, config: Config):
+    def test_login(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mocked_response = responses.post(
             url=f"{unifi_api.controller_url}{UniFiAPI.LOGIN_ENDPOINT}",
             json={
@@ -68,7 +68,7 @@ class TestHappyPathUniFiApi(TestUniFiApi):
         assert 1 == mocked_response.call_count
 
     @responses.activate
-    def test_logout(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture, config: Config):
+    def test_logout(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mocked_response = responses.post(
             url=f"{unifi_api.controller_url}{UniFiAPI.LOGOUT_ENDPOINT}",
             json={
@@ -101,7 +101,7 @@ class TestHappyPathUniFiApi(TestUniFiApi):
         assert 1 == mocked_response.call_count
 
     @responses.activate
-    def test_list_all_devices(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture, config: Config):
+    def test_list_all_devices(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mocked_response = responses.get(
             url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
             json=json.loads(devices_json_response),
@@ -124,7 +124,7 @@ class TestHappyPathUniFiApi(TestUniFiApi):
         assert 1 == mocked_response.call_count
 
     @responses.activate
-    def test_update_device(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture, config: Config):
+    def test_update_device(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mocked_response = responses.put(
             url=f"{unifi_api.controller_url}{UniFiAPI.REST_DEVICE_ENDPOINT}/MOCKED_ID",
             json=json.loads(devices_json_response),
@@ -154,7 +154,7 @@ class TestHappyPathUniFiApi(TestUniFiApi):
         assert 1 == mocked_response.call_count
 
     @responses.activate(registry=OrderedRegistry)
-    def test_reconnect(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture, config: Config):
+    def test_reconnect(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mocked_list_all_devices_failed_response = responses.get(
             url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
             json={
@@ -210,7 +210,7 @@ class TestHappyPathUniFiApi(TestUniFiApi):
 
 class TestUnhappyPathUniFiApi(TestUniFiApi):
     @responses.activate
-    def test_exception_http_error(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture, config: Config):
+    def test_exception_http_error(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mocked_response = responses.post(
             url=f"{unifi_api.controller_url}{UniFiAPI.LOGIN_ENDPOINT}",
             match=[matchers.header_matcher(response_header)],
@@ -229,7 +229,7 @@ class TestUnhappyPathUniFiApi(TestUniFiApi):
         assert 1 == len(logs)
 
     @responses.activate
-    def test_json_decode_error(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture, config: Config):
+    def test_json_decode_error(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mocked_response = responses.post(
             url=f"{unifi_api.controller_url}{UniFiAPI.LOGIN_ENDPOINT}",
             match=[matchers.header_matcher(response_header)],

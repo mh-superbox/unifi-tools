@@ -13,4 +13,6 @@ def config() -> Config:
     config.logging = LoggingConfig(level="debug")
     logging.getLogger("asyncio").setLevel(logging.WARNING)
 
+    config.device_name = "MOCKED_UNIFI"
+
     return config

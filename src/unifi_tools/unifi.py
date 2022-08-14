@@ -281,9 +281,7 @@ class UniFiSwitch:
     def _parse_feature_port(self, port_info: UniFiPort):
         self.features.register(
             FeaturePort(
-                config=self.config,
                 unifi_devices=self.unifi_devices,
-                short_name=FeatureConst.PORT,
                 unifi_device=self.unifi_device,
                 port_info=port_info,
             )

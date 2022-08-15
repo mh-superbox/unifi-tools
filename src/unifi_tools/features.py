@@ -48,27 +48,27 @@ class Feature(ABC):
     @property
     @abstractmethod
     def value(self) -> dict:
-        return {}
+        pass
 
     @property
     @abstractmethod
     def feature_name(self) -> str:
-        return ""
+        pass
 
     @property
     @abstractmethod
     def friendly_name(self) -> str:
-        return ""
+        pass
 
     @property
     @abstractmethod
     def unique_id(self) -> str:
-        return ""
+        pass
 
     @property
     @abstractmethod
     def topic(self) -> str:
-        return ""
+        pass
 
     @property
     def state(self) -> str:
@@ -160,13 +160,13 @@ class FeaturePort(Feature):
 
         return False
 
-    def set_state(self, value: dict):
+    def set_state(self, value: dict) -> bool:
+        update_devices: bool = False
+
         if FeatureConst.POE_MODE in value.keys():
             port_overrides: list = self.unifi_devices.get_device_info(device_id=self.unifi_device.id).get(
                 "port_overrides", []
             )
-
-            update_devices: bool = False
 
             for port in port_overrides:
                 if port[FeatureConst.PORT_IDX] == self.port_info.idx:
@@ -177,6 +177,8 @@ class FeaturePort(Feature):
                 self.unifi_api.update_device(
                     device_id=self.unifi_device.id, port_overrides={"port_overrides": port_overrides}
                 )
+
+        return update_devices
 
 
 class FeatureMap(DataStorage):

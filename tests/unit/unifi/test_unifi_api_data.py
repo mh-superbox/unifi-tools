@@ -76,7 +76,7 @@ devices_json_response: str = """{
                 {
                     "name": "MOCKED Port 3",
                     "port_idx": 3,
-                    "poe_mode": "auto",
+                    "poe_mode": "pasv24",
                     "portconf_id": "6070c964a61f7408a770605a",
                     "port_security_mac_address": [],
                     "stp_port_mode": true,
@@ -643,7 +643,7 @@ devices_not_adopted_json_response: str = """{
                 {
                     "name": "MOCKED Port 3",
                     "port_idx": 3,
-                    "poe_mode": "auto",
+                    "poe_mode": "pasv24",
                     "portconf_id": "6070c964a61f7408a770605a",
                     "port_security_mac_address": [],
                     "stp_port_mode": true,
@@ -1157,7 +1157,497 @@ port_overrides_payload: str = """{
         {
             "name": "MOCKED Port 3",
             "port_idx": 3,
+            "poe_mode": "pasv24",
+            "portconf_id": "6070c964a61f7408a770605a",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "name": "MOCKED Port 4",
+            "port_idx": 4,
+            "poe_mode": "off",
+            "portconf_id": "60c0bd9d0da23303beb7f793",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true
+        },
+        {
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_idx": 5,
+            "name": "MOCKED Port 5",
+            "poe_mode": "off",
+            "portconf_id": "6070c964a61f7408a770605c",
+            "port_security_mac_address": []
+        },
+        {
+            "name": "MOCKED Port 6",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "portconf_id": "60c0bd9d0da23303beb7f793",
+            "autoneg": true,
+            "port_idx": 6,
+            "poe_mode": "off"
+        },
+        {
+            "poe_mode": "off",
+            "stp_port_mode": true,
+            "port_security_mac_address": [],
+            "port_idx": 7,
+            "portconf_id": "6070c964a61f7408a770605c",
+            "name": "MOCKED Port 7",
+            "autoneg": true
+        },
+        {
+            "name": "MOCKED Port 8",
+            "port_idx": 8,
             "poe_mode": "auto",
+            "portconf_id": "6070c964a61f7408a770605c"
+        },
+        {
+            "port_security_enabled": false,
+            "autoneg": true,
+            "portconf_id": "60717a89a61f7408a7706281",
+            "stp_port_mode": true,
+            "port_idx": 9,
+            "poe_mode": "off",
+            "name": "MOCKED Port 9",
+            "port_security_mac_address": []
+        },
+        {
+            "name": "MOCKED Port 10",
+            "autoneg": true,
+            "portconf_id": "60717a89a61f7408a7706281",
+            "poe_mode": "off",
+            "port_idx": 10,
+            "stp_port_mode": true,
+            "port_security_mac_address": [],
+            "port_security_enabled": false
+        },
+        {
+            "name": "MOCKED Port 11",
+            "port_idx": 11,
+            "poe_mode": "off",
+            "portconf_id": "60c0bd9d0da23303beb7f793",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "name": "MOCKED Port 12",
+            "port_idx": 12,
+            "poe_mode": "off",
+            "portconf_id": "60717a89a61f7408a7706281",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "autoneg": true,
+            "stp_port_mode": true,
+            "portconf_id": "6070c964a61f7408a770605c",
+            "poe_mode": "off",
+            "port_idx": 13,
+            "port_security_mac_address": [],
+            "name": "MOCKED Port 13"
+        },
+        {
+            "portconf_id": "6070c964a61f7408a770605c",
+            "autoneg": true,
+            "stp_port_mode": true,
+            "port_security_mac_address": [],
+            "name": "MOCKED Port 14",
+            "port_idx": 14,
+            "poe_mode": "off"
+        },
+        {
+            "port_idx": 15,
+            "name": "MOCKED Port 15",
+            "autoneg": true,
+            "poe_mode": "off",
+            "stp_port_mode": true,
+            "port_security_mac_address": [],
+            "portconf_id": "6070c964a61f7408a770605c",
+            "port_security_enabled": false
+        },
+        {
+            "name": "MOCKED Port 16",
+            "port_idx": 16,
+            "poe_mode": "off",
+            "portconf_id": "60c0bdca0da23303beb7f799",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "name": "MOCKED Port 17",
+            "port_idx": 17,
+            "poe_mode": "auto",
+            "portconf_id": "60c0bd9d0da23303beb7f793",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "name": "MOCKED Port 18",
+            "port_idx": 18,
+            "poe_mode": "off",
+            "portconf_id": "6070c964a61f7408a770605c",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "autoneg": true,
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "poe_mode": "off",
+            "name": "MOCKED Port 19",
+            "portconf_id": "60c0bd9d0da23303beb7f793",
+            "port_idx": 19
+        },
+        {
+            "name": "MOCKED Port 20",
+            "port_idx": 20,
+            "poe_mode": "off",
+            "portconf_id": "6070c964a61f7408a770605c",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "autoneg": true,
+            "port_idx": 21,
+            "port_security_mac_address": [],
+            "portconf_id": "60c0bd9d0da23303beb7f793",
+            "name": "MOCKED Port 21",
+            "poe_mode": "off",
+            "stp_port_mode": true
+        },
+        {
+            "port_idx": 22,
+            "poe_mode": "off",
+            "port_security_mac_address": [],
+            "autoneg": true,
+            "name": "MOCKED Port 22",
+            "portconf_id": "6070c964a61f7408a770605c",
+            "stp_port_mode": true
+        },
+        {
+            "portconf_id": "6070c964a61f7408a770605a",
+            "autoneg": true,
+            "poe_mode": "off",
+            "port_idx": 23,
+            "stp_port_mode": true,
+            "name": "MOCKED Port 23",
+            "port_security_mac_address": []
+        },
+        {
+            "name": "MOCKED Port 24",
+            "port_idx": 24,
+            "poe_mode": "off",
+            "portconf_id": "622204f0cbfa12042d704038",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_idx": 25,
+            "port_security_mac_address": [],
+            "portconf_id": "6070c964a61f7408a770605b"
+        },
+        {
+            "port_security_mac_address": [],
+            "autoneg": true,
+            "portconf_id": "6070c964a61f7408a770605b",
+            "stp_port_mode": true,
+            "port_idx": 26
+        }
+    ]
+}"""
+
+updated_port_overrides_payload: str = """{
+    "port_overrides": [
+        {
+            "name": "MOCKED Port 1",
+            "port_idx": 1,
+            "poe_mode": "pasv24",
+            "portconf_id": "60c0bdca0da23303beb7f799",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "name": "MOCKED Port 2",
+            "port_idx": 2,
+            "poe_mode": "auto",
+            "portconf_id": "6070c964a61f7408a770605c",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "name": "MOCKED Port 3",
+            "port_idx": 3,
+            "poe_mode": "pasv24",
+            "portconf_id": "6070c964a61f7408a770605a",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "name": "MOCKED Port 4",
+            "port_idx": 4,
+            "poe_mode": "off",
+            "portconf_id": "60c0bd9d0da23303beb7f793",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true
+        },
+        {
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_idx": 5,
+            "name": "MOCKED Port 5",
+            "poe_mode": "off",
+            "portconf_id": "6070c964a61f7408a770605c",
+            "port_security_mac_address": []
+        },
+        {
+            "name": "MOCKED Port 6",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "portconf_id": "60c0bd9d0da23303beb7f793",
+            "autoneg": true,
+            "port_idx": 6,
+            "poe_mode": "off"
+        },
+        {
+            "poe_mode": "off",
+            "stp_port_mode": true,
+            "port_security_mac_address": [],
+            "port_idx": 7,
+            "portconf_id": "6070c964a61f7408a770605c",
+            "name": "MOCKED Port 7",
+            "autoneg": true
+        },
+        {
+            "name": "MOCKED Port 8",
+            "port_idx": 8,
+            "poe_mode": "auto",
+            "portconf_id": "6070c964a61f7408a770605c"
+        },
+        {
+            "port_security_enabled": false,
+            "autoneg": true,
+            "portconf_id": "60717a89a61f7408a7706281",
+            "stp_port_mode": true,
+            "port_idx": 9,
+            "poe_mode": "off",
+            "name": "MOCKED Port 9",
+            "port_security_mac_address": []
+        },
+        {
+            "name": "MOCKED Port 10",
+            "autoneg": true,
+            "portconf_id": "60717a89a61f7408a7706281",
+            "poe_mode": "off",
+            "port_idx": 10,
+            "stp_port_mode": true,
+            "port_security_mac_address": [],
+            "port_security_enabled": false
+        },
+        {
+            "name": "MOCKED Port 11",
+            "port_idx": 11,
+            "poe_mode": "off",
+            "portconf_id": "60c0bd9d0da23303beb7f793",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "name": "MOCKED Port 12",
+            "port_idx": 12,
+            "poe_mode": "off",
+            "portconf_id": "60717a89a61f7408a7706281",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "autoneg": true,
+            "stp_port_mode": true,
+            "portconf_id": "6070c964a61f7408a770605c",
+            "poe_mode": "off",
+            "port_idx": 13,
+            "port_security_mac_address": [],
+            "name": "MOCKED Port 13"
+        },
+        {
+            "portconf_id": "6070c964a61f7408a770605c",
+            "autoneg": true,
+            "stp_port_mode": true,
+            "port_security_mac_address": [],
+            "name": "MOCKED Port 14",
+            "port_idx": 14,
+            "poe_mode": "off"
+        },
+        {
+            "port_idx": 15,
+            "name": "MOCKED Port 15",
+            "autoneg": true,
+            "poe_mode": "off",
+            "stp_port_mode": true,
+            "port_security_mac_address": [],
+            "portconf_id": "6070c964a61f7408a770605c",
+            "port_security_enabled": false
+        },
+        {
+            "name": "MOCKED Port 16",
+            "port_idx": 16,
+            "poe_mode": "off",
+            "portconf_id": "60c0bdca0da23303beb7f799",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "name": "MOCKED Port 17",
+            "port_idx": 17,
+            "poe_mode": "auto",
+            "portconf_id": "60c0bd9d0da23303beb7f793",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "name": "MOCKED Port 18",
+            "port_idx": 18,
+            "poe_mode": "off",
+            "portconf_id": "6070c964a61f7408a770605c",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "autoneg": true,
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "poe_mode": "off",
+            "name": "MOCKED Port 19",
+            "portconf_id": "60c0bd9d0da23303beb7f793",
+            "port_idx": 19
+        },
+        {
+            "name": "MOCKED Port 20",
+            "port_idx": 20,
+            "poe_mode": "off",
+            "portconf_id": "6070c964a61f7408a770605c",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "autoneg": true,
+            "port_idx": 21,
+            "port_security_mac_address": [],
+            "portconf_id": "60c0bd9d0da23303beb7f793",
+            "name": "MOCKED Port 21",
+            "poe_mode": "off",
+            "stp_port_mode": true
+        },
+        {
+            "port_idx": 22,
+            "poe_mode": "off",
+            "port_security_mac_address": [],
+            "autoneg": true,
+            "name": "MOCKED Port 22",
+            "portconf_id": "6070c964a61f7408a770605c",
+            "stp_port_mode": true
+        },
+        {
+            "portconf_id": "6070c964a61f7408a770605a",
+            "autoneg": true,
+            "poe_mode": "off",
+            "port_idx": 23,
+            "stp_port_mode": true,
+            "name": "MOCKED Port 23",
+            "port_security_mac_address": []
+        },
+        {
+            "name": "MOCKED Port 24",
+            "port_idx": 24,
+            "poe_mode": "off",
+            "portconf_id": "622204f0cbfa12042d704038",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_idx": 25,
+            "port_security_mac_address": [],
+            "portconf_id": "6070c964a61f7408a770605b"
+        },
+        {
+            "port_security_mac_address": [],
+            "autoneg": true,
+            "portconf_id": "6070c964a61f7408a770605b",
+            "stp_port_mode": true,
+            "port_idx": 26
+        }
+    ]
+}"""
+
+updated_port_overrides_with_custom_feature_settings_payload: str = """{
+    "port_overrides": [
+        {
+            "name": "MOCKED Port 1",
+            "port_idx": 1,
+            "poe_mode": "pasv24",
+            "portconf_id": "60c0bdca0da23303beb7f799",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "name": "MOCKED Port 2",
+            "port_idx": 2,
+            "poe_mode": "off",
+            "portconf_id": "6070c964a61f7408a770605c",
+            "port_security_mac_address": [],
+            "stp_port_mode": true,
+            "autoneg": true,
+            "port_security_enabled": false
+        },
+        {
+            "name": "MOCKED Port 3",
+            "port_idx": 3,
+            "poe_mode": "pasv24",
             "portconf_id": "6070c964a61f7408a770605a",
             "port_security_mac_address": [],
             "stp_port_mode": true,

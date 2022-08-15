@@ -1,4 +1,5 @@
 import json
+from typing import Iterator
 from typing import Optional
 
 import pytest
@@ -71,13 +72,16 @@ class TestHappyPathUniFiDevices(TestUniFiApi):
         assert "[API] Reading adopted devices." in logs
         assert 1 == len(logs)
 
+        features = unifi_devices.features.by_feature_type(["port"])
+        feature = next(features)
         ports = unifi_devices.features[FeatureConst.PORT]
 
+        assert isinstance(features, Iterator)
         assert isinstance(ports, list)
-        assert isinstance(ports[0], FeaturePort)
+        assert isinstance(feature, FeaturePort)
         assert 26 == len(ports)
-        assert "MOCKED Port 1" == str(ports[0])
-        assert {"poe_mode": "on"} == ports[0].value
+        assert "MOCKED Port 1" == str(feature)
+        assert {"poe_mode": "on"} == feature.value
 
 
 class TestUnhappyPathUniFiDevices(TestUniFiApi):

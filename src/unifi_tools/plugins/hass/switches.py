@@ -11,7 +11,6 @@ from unifi_tools.config import Config
 from unifi_tools.config import LOG_MQTT_PUBLISH
 from unifi_tools.config import logger
 from unifi_tools.features import FeatureConst
-from unifi_tools.features import FeatureMap
 from unifi_tools.plugins.hass.discover import HassBaseDiscovery
 from unifi_tools.unifi import UniFiDevices
 
@@ -23,7 +22,7 @@ class HassSwitchesDiscovery(HassBaseDiscovery):
         self.config: Config = unifi_devices.config
         self.unifi_devices: UniFiDevices = unifi_devices
         self.mqtt_client = mqtt_client
-        self.features: FeatureMap = unifi_devices.features
+        self.features: xFeatureMap = unifi_devices.features
 
         super().__init__(config=unifi_devices.config)
 

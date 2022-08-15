@@ -14,5 +14,15 @@ def config() -> Config:
     logging.getLogger("asyncio").setLevel(logging.WARNING)
 
     config.device_name = "MOCKED_UNIFI"
+    config.features = {
+        "MOCKED_ID": {
+            "ports": [
+                {
+                    "port_idx": 3,
+                    "poe_mode": "pasv24",
+                }
+            ]
+        }
+    }
 
     return config

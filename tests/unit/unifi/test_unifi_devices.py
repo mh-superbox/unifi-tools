@@ -16,6 +16,7 @@ from unit.unifi.test_unifi_api import TestUniFiApi
 from unit.unifi.test_unifi_api_data import devices_json_response
 from unit.unifi.test_unifi_api_data import devices_not_adopted_json_response
 from unit.unifi.test_unifi_api_data import response_header
+from unit.unifi.test_unifi_devices_data import feature_map_repr
 
 
 class TestHappyPathUniFiDevices(TestUniFiApi):
@@ -73,9 +74,11 @@ class TestHappyPathUniFiDevices(TestUniFiApi):
         assert 1 == len(logs)
 
         features = unifi_devices.features.by_feature_type(["port"])
+
         feature = next(features)
         ports = unifi_devices.features[FeatureConst.PORT]
 
+        assert feature_map_repr == str(unifi_devices.features)
         assert isinstance(features, Iterator)
         assert isinstance(ports, list)
         assert isinstance(feature, FeaturePort)

@@ -183,10 +183,10 @@ class FeaturePort(Feature):
 
 class FeatureMap(DataStorage):
     def register(self, feature: Feature):
-        if not self.data.get(feature.feature_name):
-            self.data[feature.feature_name] = []
+        if not self.get(feature.feature_name):
+            self[feature.feature_name] = []
 
-        self.data[feature.feature_name].append(feature)
+        self[feature.feature_name].append(feature)
 
     def by_feature_type(self, feature_type: List[str]) -> Iterator:
         return itertools.chain.from_iterable(filter(None, map(self.data.get, feature_type)))

@@ -93,17 +93,16 @@ class Config(ConfigBase):
     device_name: str = field(default=socket.gethostname())
     mqtt: MqttConfig = field(default=MqttConfig())
     homeassistant: HomeAssistantConfig = field(default=HomeAssistantConfig())
-    features: dict = field(init=False, default_factory=dict)
     unifi_controller: UniFiControllerConfig = field(default=UniFiControllerConfig())
+    features: dict = field(default_factory=dict)
     logging: LoggingConfig = field(default=LoggingConfig())
     config_file_path: Path = field(default=Path("/etc/unifi/settings.yaml"))
 
     def __post_init__(self):
-        super().__post_init__()
-
         _config: dict = self.get_config(self.config_file_path)
-
         self.update(_config)
+
+        super().__post_init__()
 
         if self.device_name:
             result: Optional[Match[str]] = re.search(r"^[\w\d_-]*$", self.device_name)

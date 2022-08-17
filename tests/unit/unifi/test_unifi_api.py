@@ -18,7 +18,7 @@ from unit.unifi.test_unifi_api_data import response_header
 
 class TestUniFiApi:
     @pytest.fixture(scope="function")
-    def unifi_api(self, config) -> UniFiAPI:
+    def unifi_api(self, config: Config) -> UniFiAPI:
         config.unifi_controller.url = "unifi.local"
         config.unifi_controller.port = 443
 

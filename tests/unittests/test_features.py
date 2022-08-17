@@ -9,11 +9,11 @@ from unifi_tools.features import FeaturePort
 from unifi_tools.unifi import UniFiAPI
 from unifi_tools.unifi import UniFiDevice
 from unifi_tools.unifi import UniFiDevices
-from unit.unifi.test_unifi_api import TestUniFiApi
-from unit.unifi.test_unifi_api_data import devices_json_response
-from unit.unifi.test_unifi_api_data import response_header
-from unit.unifi.test_unifi_api_data import updated_port_overrides_payload
-from unit.unifi.test_unifi_api_data import updated_port_overrides_with_custom_feature_settings_payload
+from unittests.test_unifi_api import TestUniFiApi
+from unittests.test_unifi_api_data import devices_json_response
+from unittests.test_unifi_api_data import response_header
+from unittests.test_unifi_api_data import updated_port_overrides_payload
+from unittests.test_unifi_api_data import updated_port_overrides_with_custom_feature_settings_payload
 
 
 class TestHappyPathFeatures(TestUniFiApi):

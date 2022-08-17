@@ -12,11 +12,11 @@ from unifi_tools.features import FeaturePort
 from unifi_tools.unifi import UniFiAPI
 from unifi_tools.unifi import UniFiDevices
 from unifi_tools.unifi import UniFiPort
-from unit.unifi.test_unifi_api import TestUniFiApi
-from unit.unifi.test_unifi_api_data import devices_json_response
-from unit.unifi.test_unifi_api_data import devices_not_adopted_json_response
-from unit.unifi.test_unifi_api_data import response_header
-from unit.unifi.test_unifi_devices_data import feature_map_repr
+from unittests.test_unifi_api import TestUniFiApi
+from unittests.test_unifi_api_data import devices_json_response
+from unittests.test_unifi_api_data import devices_not_adopted_json_response
+from unittests.test_unifi_api_data import response_header
+from unittests.test_unifi_devices_data import feature_map_repr
 
 
 class TestHappyPathUniFiDevices(TestUniFiApi):

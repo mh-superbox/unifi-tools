@@ -109,13 +109,17 @@ class UniFiTools:
         pass
 
 
-def main():
+def parse_args(args):
     parser = argparse.ArgumentParser(description="Control UniFi devices with MQTT commands")
     parser.add_argument("-c", "--config", help="path to configuration file")
     parser.add_argument("-i", "--install", action="store_true", help="install unifi tools")
     parser.add_argument("-y", "--yes", action="store_true", help="automatic yes to install prompts")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
-    args = parser.parse_args()
+    return parser.parse_args(args)
+
+
+def main():
+    args = parse_args(sys.argv[1:])
 
     try:
         if args.install:

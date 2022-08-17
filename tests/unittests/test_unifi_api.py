@@ -11,9 +11,9 @@ from responses.registries import OrderedRegistry
 from unifi_tools.config import Config
 from unifi_tools.unifi import UniFiAPI
 from unifi_tools.unifi import UniFiAPIResult
-from unit.unifi.test_unifi_api_data import devices_json_response
-from unit.unifi.test_unifi_api_data import port_overrides_payload
-from unit.unifi.test_unifi_api_data import response_header
+from unittests.test_unifi_api_data import devices_json_response
+from unittests.test_unifi_api_data import port_overrides_payload
+from unittests.test_unifi_api_data import response_header
 
 
 class TestUniFiApi:

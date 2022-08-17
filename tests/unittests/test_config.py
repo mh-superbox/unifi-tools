@@ -5,11 +5,11 @@ import pytest
 from _pytest.logging import LogCaptureFixture
 
 from unifi_tools.config import Config
-from unit.unifi.test_config_data import config_invalid_device_name
-from unit.unifi.test_config_data import config_invalid_type
+from unittests.test_config_data import config_invalid_device_name
+from unittests.test_config_data import config_invalid_type
 
 
-class TestUnhappyConfig:
+class TestUnhappyPathConfig:
     def test_invalid_device_name(self, caplog: LogCaptureFixture):
         tmp = tempfile.NamedTemporaryFile()
 

@@ -2,6 +2,8 @@ name: Create coverage badge
 
 on:
   push:
+    branches:
+      - main
 
 jobs:
   coverage:

@@ -24,8 +24,8 @@ jobs:
         pipenv install --deploy --dev
     - name: Check code format with black
       run: pipenv run black --diff --check $(git ls-files '*.py')
-    - name: Lint with flake8
-      run: pipenv run flake8 $(git ls-files '*.py') --show-source --statistics
+#    - name: Lint with flake8
+#      run: pipenv run flake8 $(git ls-files '*.py') --show-source --statistics
     - name: Lint with mypy
       run: pipenv run mypy $(git ls-files '*.py')
     - name: Run tests

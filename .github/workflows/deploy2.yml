@@ -35,7 +35,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install --upgrade pipenv
           python -m pip install build -user
-          pipenv install --deploy --dev
+          python -m pipenv install --deploy --dev
       - name: Build package
         run: python -m build --sdist --wheel --outdir dist/ .
       - name: Publish test package

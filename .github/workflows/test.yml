@@ -5,7 +5,7 @@ on:
   workflow_call:
 
 jobs:
-  tests:
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -22,6 +22,11 @@ jobs:
           python -m pip install --upgrade pipenv
           pip install build
           pipenv install --deploy --dev
+
+  linter:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
       - name: Check code format with black
         run: pipenv run black --diff --check $(git ls-files '*.py')
   #    - name: Lint with flake8
@@ -31,10 +36,12 @@ jobs:
       - name: Run tests
         run: pipenv run pytest
 
-  coverage:
-    needs: [tests]
+  test:
+    needs: [linter]
     runs-on: ubuntu-latest
     steps:
+      - name: Run tests
+        run: pipenv run pytest
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0

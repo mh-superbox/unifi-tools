@@ -24,11 +24,10 @@ jobs:
     needs: [check-tag]
     if: needs.check-tag.outputs.release-type == 'release' || needs.check-tag.outputs.release-type == 'prerelease'
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: '3.8'
       - name: Install dependencies
@@ -37,14 +36,6 @@ jobs:
           python -m pip install --upgrade pipenv
           pip install build
           pipenv install --deploy --dev
-      - name: Check code format with black
-        run: pipenv run black --diff --check $(git ls-files '*.py')
-  #    - name: Lint with flake8
-  #      run: pipenv run flake8 $(git ls-files '*.py') --show-source --statistics
-      - name: Lint with mypy
-        run: pipenv run mypy $(git ls-files '*.py')
-      - name: Run tests
-        run: pipenv run pytest
       - name: Build package
         run: python -m build
       - name: Publish test package

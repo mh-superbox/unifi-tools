@@ -2,7 +2,6 @@ name: Test Python Package
 
 on:
   push:
-  workflow_call:
 
 jobs:
   test:
@@ -29,27 +28,5 @@ jobs:
   #      run: pipenv run flake8 $(git ls-files '*.py') --show-source --statistics
       - name: Lint with mypy
         run: pipenv run mypy $(git ls-files '*.py')
-      - name: Run tests
+      - name: Run pytest
         run: pipenv run pytest
-      - name: Create coverage badge
-        if: matrix.python-version == "3.8"
-        uses: tj-actions/coverage-badge-py@v1.8
-      - name: Verify changed files
-        if: matrix.python-version == "3.8"
-        uses: tj-actions/verify-changed-files@v9
-        id: changed_files
-        with:
-          files: coverage.svg
-      - name: Commit coverage file
-        if: matrix.python-version == "3.8" && steps.changed_files.outputs.files_changed == 'true'
-        run: |
-          git config --local user.email "mh@superbox.one"
-          git config --local user.name "Michael Hacker"
-          git add coverage.svg
-          git commit -m "Updated coverage.svg"
-      - name: Push changes
-        if: matrix.python-version == "3.8" && steps.changed_files.outputs.files_changed == 'true'
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref }}

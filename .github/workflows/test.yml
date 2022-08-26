@@ -5,7 +5,7 @@ on:
   workflow_call:
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -23,20 +23,6 @@ jobs:
           python -m pip install --upgrade pipenv
           pip install build
           pipenv install --deploy --dev
-      - name: Archive workspace
-        uses: actions/upload-artifact@v3
-        with:
-          name: workspace
-          path: ${{ github.workspace }}
-
-  linter:
-    needs: [build]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download workspace
-        uses: actions/download-artifact@v3
-        with:
-          name: workspace
       - name: Check code format with black
         run: pipenv run black --diff --check $(git ls-files '*.py')
   #    - name: Lint with flake8
@@ -45,36 +31,24 @@ jobs:
         run: pipenv run mypy $(git ls-files '*.py')
       - name: Run tests
         run: pipenv run pytest
-
-  test:
-    needs: [linter]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download workspace
-        uses: actions/download-artifact@v3
-        with:
-          name: workspace
-      - name: Run tests
-        run: pipenv run pytest
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Coverage Badge
+      - name: Create coverage badge
+        if: matrix.python-version == "3.8"
         uses: tj-actions/coverage-badge-py@v1.8
-      - name: Verify Changed files
+      - name: Verify changed files
+        if: matrix.python-version == "3.8"
         uses: tj-actions/verify-changed-files@v9
         id: changed_files
         with:
           files: coverage.svg
-      - name: Commit files
-        if: steps.changed_files.outputs.files_changed == 'true'
+      - name: Commit coverage file
+        if: matrix.python-version == "3.8" && steps.changed_files.outputs.files_changed == 'true'
         run: |
           git config --local user.email "mh@superbox.one"
           git config --local user.name "Michael Hacker"
           git add coverage.svg
           git commit -m "Updated coverage.svg"
       - name: Push changes
-        if: steps.changed_files.outputs.files_changed == 'true'
+        if: matrix.python-version == "3.8" && steps.changed_files.outputs.files_changed == 'true'
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

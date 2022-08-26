@@ -54,13 +54,11 @@ class HassBinarySensorsDiscovery(HassBaseDiscovery):
     async def publish(self):
         for feature in self.features.by_feature_type(self.publish_feature_types):
             # TODO Refactor when multiple feature types exists!
-            if not feature.poe_mode:
-                continue
-
-            topic, message = self._get_discovery(feature)
-            json_data: str = json.dumps(message)
-            await self.mqtt_client.publish(topic, json_data, qos=2, retain=True)
-            logger.debug(LOG_MQTT_PUBLISH, topic, json_data)
+            if feature.poe_mode:
+                topic, message = self._get_discovery(feature)
+                json_data: str = json.dumps(message)
+                await self.mqtt_client.publish(topic, json_data, qos=2, retain=True)
+                logger.debug(LOG_MQTT_PUBLISH, topic, json_data)
 
 
 class HassBinarySensorsMqttPlugin:

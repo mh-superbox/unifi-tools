@@ -1,48 +1,40 @@
 import logging
 import tempfile
 from pathlib import Path
-from typing import Final
 
 import pytest
 
 from unifi_tools.config import Config
+from unifi_tools.config import LOGGER_NAME
 
-CONFIG_CONTENT: Final[
-    str
-] = """device_name: MOCKED_UNIFI
-mqtt:
-  host: localhost
-  port: 1883
-  connection:
-    keepalive: 15
-    retry_limit: 30
-    reconnect_interval: 10
-homeassistant:
-  enabled: true
-  discovery_prefix: homeassistant
-unifi_controller:
-  url: localhost
-  port: 8443
-  username: username
-  password: password
-features:
-  MOCKED_ID:
-    ports:
-      - port_idx: 3
-        poe_mode: pasv24
-logging:
-  level: debug
-"""
+
+@pytest.fixture(autouse=True, scope="session")
+def logger():
+    logging.getLogger("asyncio").setLevel(logging.WARNING)
+    logging.getLogger(LOGGER_NAME).handlers.clear()
+    logging.info("Initialize logging")
+
+
+class ConfigLoader:
+    def __init__(self):
+        self.temp_name: Path = Path(tempfile.NamedTemporaryFile().name)
+
+    def write_config(self, content: str):
+        with open(self.temp_name, "w") as f:
+            f.write(content)
+
+    def get_config(self) -> Config:
+        return Config(config_file_path=self.temp_name)
+
+    def cleanup(self):
+        self.temp_name.unlink()
 
 
 @pytest.fixture()
-def config() -> Config:
-    tmp = tempfile.NamedTemporaryFile()
+def config_loader(request) -> ConfigLoader:
+    c = ConfigLoader()
+    c.write_config(request.param)
 
-    with open(tmp.name, "w") as f:
-        f.write(CONFIG_CONTENT)
+    logging.info("Create configuration: %s", c.get_config())
 
-    _config = Config(config_file_path=Path(tmp.name))
-    logging.getLogger("asyncio").setLevel(logging.WARNING)
-
-    return _config
+    return c

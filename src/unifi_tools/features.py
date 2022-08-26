@@ -164,9 +164,8 @@ class FeaturePort(Feature):
         update_devices: bool = False
 
         if FeatureConst.POE_MODE in value.keys():
-            port_overrides: list = self.unifi_devices.get_device_info(device_id=self.unifi_device.id).get(
-                "port_overrides", []
-            )
+            device_info = self.unifi_devices.get_device_info(device_id=self.unifi_device.id)
+            port_overrides: list = device_info.get("port_overrides", [])
 
             for port in port_overrides:
                 if port[FeatureConst.PORT_IDX] == self.port_info.idx:

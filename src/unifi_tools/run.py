@@ -115,6 +115,7 @@ def parse_args(args):
     parser.add_argument("-i", "--install", action="store_true", help="install unifi tools")
     parser.add_argument("-y", "--yes", action="store_true", help="automatic yes to install prompts")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+
     return parser.parse_args(args)
 
 

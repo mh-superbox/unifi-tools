@@ -5,6 +5,7 @@ from abc import abstractmethod
 from asyncio import Task
 from contextlib import AsyncExitStack
 from typing import Any
+from typing import AsyncContextManager
 from typing import AsyncIterable
 from typing import List
 from typing import Set
@@ -33,8 +34,8 @@ class BaseFeaturesMqttPlugin(ABC):
         for feature in self.features.by_feature_type(self.subscribe_feature_types):
             topic: str = f"{feature.topic}/set"
 
-            manager = self.mqtt_client.filtered_messages(topic)
-            messages = await stack.enter_async_context(manager)
+            manager: AsyncContextManager = self.mqtt_client.filtered_messages(topic)
+            messages: AsyncIterable = await stack.enter_async_context(manager)
 
             subscribe_task: Task[Any] = asyncio.create_task(self._subscribe(feature, topic, messages))
             tasks.add(subscribe_task)
@@ -47,9 +48,8 @@ class BaseFeaturesMqttPlugin(ABC):
 
         return tasks
 
-    @staticmethod
     @abstractmethod
-    async def _subscribe(feature, topic: str, messages: AsyncIterable):
+    async def _subscribe(self, feature, topic: str, messages: AsyncIterable):
         pass
 
     @abstractmethod
@@ -60,16 +60,18 @@ class BaseFeaturesMqttPlugin(ABC):
 class FeaturesMqttPlugin(BaseFeaturesMqttPlugin):
     """Provide features control as MQTT commands."""
 
+    PUBLISH_RUNNING: bool = True
+
     subscribe_feature_types: List[str] = [FeatureConst.PORT]
     publish_feature_types: List[str] = [FeatureConst.PORT]
 
     def __init__(self, unifi_devices, mqtt_client):
         super().__init__(unifi_devices, mqtt_client)
 
-    @staticmethod
-    async def _subscribe(feature, topic: str, messages: AsyncIterable):
+    async def _subscribe(self, feature, topic: str, messages: AsyncIterable):
         async for message in messages:
             data: dict = {}
+
             value: str = message.payload.decode()
 
             try:
@@ -82,7 +84,7 @@ class FeaturesMqttPlugin(BaseFeaturesMqttPlugin):
                 logger.info(LOG_MQTT_SUBSCRIBE, topic, value)
 
     async def _publish(self):
-        while True:
+        while self.PUBLISH_RUNNING:
             self.unifi_devices.scan()
 
             for feature in self.features.by_feature_type(self.publish_feature_types):

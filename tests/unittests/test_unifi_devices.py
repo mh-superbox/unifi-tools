@@ -7,6 +7,7 @@ import responses
 from _pytest.logging import LogCaptureFixture
 from responses import matchers
 
+from conftest_data import CONFIG_CONTENT
 from unifi_tools.features import FeatureConst
 from unifi_tools.features import FeaturePort
 from unifi_tools.unifi import UniFiAPI
@@ -22,17 +23,19 @@ from unittests.test_unifi_devices_data import feature_map_repr
 class TestHappyPathUniFiDevices(TestUniFiApi):
     @responses.activate
     @pytest.fixture(autouse=True)
-    def setup(self, unifi_api: UniFiAPI):
-        mocked_response = responses.get(
+    @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
+    def setup(self, config_loader, unifi_api: UniFiAPI):
+        mock_response = responses.get(
             url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
             json=json.loads(devices_json_response),
             match=[matchers.header_matcher(response_header)],
         )
 
-        responses.add(mocked_response)
+        responses.add(mock_response)
 
     @responses.activate
-    def test_device_info(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
+    def test_device_info(self, config_loader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         unifi_devices = UniFiDevices(unifi_api=unifi_api)
         device_info: Optional[dict] = unifi_devices.get_device_info(device_id="MOCKED_ID")
 
@@ -45,7 +48,8 @@ class TestHappyPathUniFiDevices(TestUniFiApi):
         assert "MOCKED_ID" == device_info["_id"]
 
     @responses.activate
-    def test_scan(self, unifi_api: UniFiAPI):
+    @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
+    def test_scan(self, config_loader, unifi_api: UniFiAPI):
         unifi_devices = UniFiDevices(unifi_api=unifi_api)
 
         assert 0 == len(unifi_devices.unifi_device_map)
@@ -62,7 +66,8 @@ class TestHappyPathUniFiDevices(TestUniFiApi):
         assert 4 == len(device.keys())
 
     @responses.activate
-    def test_read_devices(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
+    def test_read_devices(self, config_loader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         unifi_devices = UniFiDevices(unifi_api=unifi_api)
 
         assert 0 == len(unifi_devices.features)
@@ -89,14 +94,15 @@ class TestHappyPathUniFiDevices(TestUniFiApi):
 
 class TestUnhappyPathUniFiDevices(TestUniFiApi):
     @responses.activate
-    def test_device_info_not_adopted(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
-        mocked_response = responses.get(
+    @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
+    def test_device_info_not_adopted(self, config_loader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+        mock_response = responses.get(
             url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
             json=json.loads(devices_not_adopted_json_response),
             match=[matchers.header_matcher(response_header)],
         )
 
-        responses.add(mocked_response)
+        responses.add(mock_response)
         unifi_devices = UniFiDevices(unifi_api=unifi_api)
         device_info: dict = unifi_devices.get_device_info(device_id="MOCKED_ID")
 

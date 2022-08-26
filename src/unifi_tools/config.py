@@ -8,20 +8,22 @@ from dataclasses import field
 from dataclasses import is_dataclass
 from pathlib import Path
 from typing import Dict
+from typing import Final
 from typing import Match
 from typing import Optional
 
 import yaml
 
-LOG_MQTT_PUBLISH: str = "[MQTT] [%s] Publishing message: %s"
-LOG_MQTT_SUBSCRIBE: str = "[MQTT] [%s] Subscribe message: %s"
-LOG_MQTT_INVALIDE_SUBSCRIBE: str = "[MQTT] [%s] Invalid subscribe message: %s"
-LOG_MQTT_SUBSCRIBE_TOPIC: str = "[MQTT] Subscribe topic %s"
+LOG_MQTT_PUBLISH: Final[str] = "[MQTT] [%s] Publishing message: %s"
+LOG_MQTT_SUBSCRIBE: Final[str] = "[MQTT] [%s] Subscribe message: %s"
+LOG_MQTT_INVALIDE_SUBSCRIBE: Final[str] = "[MQTT] [%s] Invalid subscribe message: %s"
+LOG_MQTT_SUBSCRIBE_TOPIC: Final[str] = "[MQTT] Subscribe topic %s"
+LOGGER_NAME: Final[str] = "unifi-tools"
 
 stdout_handler = logging.StreamHandler(stream=sys.stdout)
 stdout_handler.setFormatter(logging.Formatter(fmt="%(levelname)8s | %(message)s"))
 
-logger = logging.getLogger("unifi-tools")
+logger = logging.getLogger(LOGGER_NAME)
 logger.setLevel(logging.INFO)
 logger.addHandler(stdout_handler)
 
@@ -72,7 +74,7 @@ class DeviceInfo(ConfigBase):
 class HomeAssistantConfig(ConfigBase):
     enabled: bool = field(default=True)
     discovery_prefix: str = field(default="homeassistant")
-    device: DeviceInfo = field(default=DeviceInfo())
+    device: DeviceInfo = field(default_factory=DeviceInfo)
 
 
 @dataclass
@@ -91,11 +93,11 @@ class LoggingConfig(ConfigBase):
 @dataclass
 class Config(ConfigBase):
     device_name: str = field(default=socket.gethostname())
-    mqtt: MqttConfig = field(default=MqttConfig())
-    homeassistant: HomeAssistantConfig = field(default=HomeAssistantConfig())
-    unifi_controller: UniFiControllerConfig = field(default=UniFiControllerConfig())
+    mqtt: MqttConfig = field(default_factory=MqttConfig)
+    homeassistant: HomeAssistantConfig = field(default_factory=HomeAssistantConfig)
+    unifi_controller: UniFiControllerConfig = field(default_factory=UniFiControllerConfig)
     features: dict = field(default_factory=dict)
-    logging: LoggingConfig = field(default=LoggingConfig())
+    logging: LoggingConfig = field(default_factory=LoggingConfig)
     config_file_path: Path = field(default=Path("/etc/unifi/settings.yaml"))
 
     def __post_init__(self):

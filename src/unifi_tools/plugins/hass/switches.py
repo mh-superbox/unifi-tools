@@ -16,7 +16,7 @@ from unifi_tools.plugins.hass.discover import HassBaseDiscovery
 from unifi_tools.unifi import UniFiDevices
 
 
-class HassBinarySensorsDiscovery(HassBaseDiscovery):
+class HassSwitchesDiscovery(HassBaseDiscovery):
     publish_feature_types: List[str] = [FeatureConst.PORT]
 
     def __init__(self, unifi_devices: UniFiDevices, mqtt_client):
@@ -28,17 +28,19 @@ class HassBinarySensorsDiscovery(HassBaseDiscovery):
         super().__init__(config=unifi_devices.config)
 
     def _get_discovery(self, feature) -> Tuple[str, dict]:
-        topic: str = f"{self.config.homeassistant.discovery_prefix}/binary_sensor/{feature.topic}/config"
+        topic: str = f"{self.config.homeassistant.discovery_prefix}/switch/{feature.topic}/config"
 
-        # TODO: add extra json attribute for real PoE state
-        message: dict = {
+        message = {
             "name": f"{feature.friendly_name}",
             "unique_id": f"{self.config.device_name.lower()}-{feature.unique_id}",
             "object_id": f"{self.config.device_name.lower()}-{feature.unique_id}",
+            "command_topic": f"{feature.topic}/set",
             "state_topic": f"{feature.topic}/get",
             "value_template": "{{ value_json.poe_mode }}",
-            "payload_on": "on",
-            "payload_off": "off",
+            "state_on": "on",
+            "state_off": "off",
+            "payload_on": """{ "poe_mode": "on" }""",
+            "payload_off": """{ "poe_mode": "off" }""",
             "qos": 2,
             "device": {
                 "name": feature.unifi_device.info["name"],
@@ -61,11 +63,11 @@ class HassBinarySensorsDiscovery(HassBaseDiscovery):
                 logger.debug(LOG_MQTT_PUBLISH, topic, json_data)
 
 
-class HassBinarySensorsMqttPlugin:
-    """Provide Home Assistant MQTT commands for binary sensors."""
+class HassSwitchesMqttPlugin:
+    """Provide Home Assistant MQTT commands for switches."""
 
     def __init__(self, unifi_devices: UniFiDevices, mqtt_client):
-        self._hass = HassBinarySensorsDiscovery(unifi_devices, mqtt_client)
+        self._hass = HassSwitchesDiscovery(unifi_devices, mqtt_client)
 
     async def init_tasks(self) -> Set[Task]:
         tasks: Set[Task] = set()

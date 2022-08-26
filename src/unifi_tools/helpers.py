@@ -3,14 +3,6 @@ from collections.abc import MutableMapping
 
 
 class DataStorage(MutableMapping):
-    """A read-only container object that works like a dict.
-
-    Attributes
-    ----------
-    data : dict
-        Store the data for this container object.
-    """
-
     def __init__(self):
         self.data: dict = {}
 

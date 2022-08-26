@@ -2,6 +2,11 @@
 line-length = 120
 target-version = ["py38"]
 
+#[tool.flake8]
+#ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D107", "E501", "W503", "W504"]
+#max-line-length = 120
+#count = true
+
 [tool.mypy]
 python_version = "3.8"
 mypy_path = "src"
@@ -19,8 +24,8 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 
 [tool.pytest.ini_options]
-testpaths = [
-    "tests",
-]
-asyncio_mode = "strict"
-addopts = "--cov --cov-append"
+log_cli = true
+log_cli_level = "DEBUG"
+log_cli_format = "%(levelname)-8s | %(asctime)s: %(message)s"
+testpaths = ["tests"]
+pythonpath = ["src", "tests"]

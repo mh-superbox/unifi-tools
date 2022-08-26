@@ -5,7 +5,6 @@ from abc import abstractmethod
 from collections.abc import Iterator
 from typing import Final
 from typing import List
-from typing import Optional
 
 from unifi_tools.config import Config
 from unifi_tools.helpers import DataStorage
@@ -20,8 +19,10 @@ class FeaturePoEState:
 
 class FeatureConst:
     PORT: Final[str] = "port"
+    POE: Final[str] = "PoE"
     POE_MODE: Final[str] = "poe_mode"
     PORT_IDX: Final[str] = "port_idx"
+    PORT_NAME: Final[str] = "name"
     POE_MODES: Final[tuple] = (
         FeaturePoEState.ON,
         FeaturePoEState.OFF,
@@ -33,11 +34,11 @@ class FeatureConst:
 class Feature(ABC):
     name: str = "Feature"
 
-    def __init__(self, config: Config, unifi_devices, unifi_device, short_name: str):
-        self.config: Config = config
+    def __init__(self, unifi_devices, unifi_device):
+        self.config: Config = unifi_devices.config
         self.unifi_devices = unifi_devices
         self.unifi_device = unifi_device
-        self.short_name: str = short_name
+        self.unifi_api = unifi_devices.unifi_api
 
         self._value: dict = {}
 
@@ -47,22 +48,27 @@ class Feature(ABC):
     @property
     @abstractmethod
     def value(self) -> dict:
-        return {}
+        pass
 
     @property
     @abstractmethod
     def feature_name(self) -> str:
-        return ""
+        pass
 
     @property
     @abstractmethod
     def friendly_name(self) -> str:
-        return ""
+        pass
+
+    @property
+    @abstractmethod
+    def unique_id(self) -> str:
+        pass
 
     @property
     @abstractmethod
     def topic(self) -> str:
-        return ""
+        pass
 
     @property
     def state(self) -> str:
@@ -81,25 +87,30 @@ class Feature(ABC):
 class FeaturePort(Feature):
     name: str = "Port"
 
-    def __init__(self, config: Config, unifi_devices, unifi_device, short_name: str, port_idx: int):
+    def __init__(self, unifi_devices, unifi_device, port_info):
         super().__init__(
-            config=config,
             unifi_devices=unifi_devices,
             unifi_device=unifi_device,
-            short_name=short_name,
         )
-        self.port_idx: int = port_idx
+        self.port_info = port_info
+
+    @property
+    def poe_mode(self) -> str:
+        device_info = self.unifi_devices.unifi_device_map.get(self.unifi_device.id)
+        port = device_info["ports"][self.port_info.idx]
+        poe_mode: str = port.poe_mode
+
+        if poe_mode in [FeaturePoEState.POE24V, FeaturePoEState.POE]:
+            poe_mode = FeaturePoEState.ON
+
+        return poe_mode
 
     @property
     def value(self) -> dict:
         _value: dict = {}
 
-        device_info = self.unifi_devices.cached_devices.get(self.unifi_device.id)
-        port = device_info["ports"][self.port_idx]
-        poe_mode = self._get_real_poe_mode(poe_mode=port.poe_mode)
-
-        if poe_mode:
-            _value[FeatureConst.POE_MODE] = poe_mode
+        if self.poe_mode:
+            _value[FeatureConst.POE_MODE] = self.poe_mode
 
         return _value
 
@@ -109,13 +120,18 @@ class FeaturePort(Feature):
 
     @property
     def friendly_name(self) -> str:
-        return f"{self.name} #{self.port_idx}"
+        if self.port_info.name:
+            return self.port_info.name
+
+        return f"{self.name} #{self.port_info.idx:02d}"
+
+    @property
+    def unique_id(self) -> str:
+        return f"{self.unifi_device.id}-{self.feature_name.lower()}-{self.port_info.idx}"
 
     @property
     def topic(self) -> str:
-        topic: str = f"""{self.config.device_name.lower()}/{self.unifi_device.id}/{self.feature_name}/{self.port_idx}"""
-
-        return topic
+        return f"{self.config.device_name.lower()}/{self.unique_id}"
 
     def _get_real_poe_mode(self, poe_mode: str) -> str:
         # When state is "on" then check settings if PoE for this port is "auto" or "pasv24".
@@ -124,7 +140,7 @@ class FeaturePort(Feature):
             poe_mode = FeaturePoEState.POE
 
             for port in feature.get("ports", []):
-                if port.get(FeatureConst.PORT_IDX) == self.port_idx:
+                if port.get(FeatureConst.PORT_IDX) == self.port_info.idx:
                     poe_mode = port.get(FeatureConst.POE_MODE, FeaturePoEState.POE)
                     break
 
@@ -144,30 +160,32 @@ class FeaturePort(Feature):
 
         return False
 
-    async def set_state(self, value: dict):
+    def set_state(self, value: dict) -> bool:
+        update_devices: bool = False
+
         if FeatureConst.POE_MODE in value.keys():
-            port_overrides: Optional[List[dict]] = self.unifi_devices.get_device_port_info(self.unifi_device.id)
+            device_info = self.unifi_devices.get_device_info(device_id=self.unifi_device.id)
+            port_overrides: list = device_info.get("port_overrides", [])
 
-            if port_overrides:
-                update_devices: bool = False
+            for port in port_overrides:
+                if port[FeatureConst.PORT_IDX] == self.port_info.idx:
+                    update_devices = self._set_port_poe(port, value[FeatureConst.POE_MODE])
+                    break
 
-                for port in port_overrides:
-                    if port[FeatureConst.PORT_IDX] == self.port_idx:
-                        update_devices = self._set_port_poe(port, value[FeatureConst.POE_MODE])
-                        break
+            if update_devices:
+                self.unifi_api.update_device(
+                    device_id=self.unifi_device.id, port_overrides={"port_overrides": port_overrides}
+                )
 
-                if update_devices:
-                    self.unifi_devices.update_device_port_info(
-                        device_id=self.unifi_device.id, port_overrides={"port_overrides": port_overrides}
-                    )
+        return update_devices
 
 
 class FeatureMap(DataStorage):
     def register(self, feature: Feature):
-        if not self.data.get(feature.short_name):
-            self.data[feature.short_name] = []
+        if not self.get(feature.feature_name):
+            self[feature.feature_name] = []
 
-        self.data[feature.short_name].append(feature)
+        self[feature.feature_name].append(feature)
 
     def by_feature_type(self, feature_type: List[str]) -> Iterator:
         return itertools.chain.from_iterable(filter(None, map(self.data.get, feature_type)))

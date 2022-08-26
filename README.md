@@ -158,4 +158,4 @@ Available MQTT topics:
 
 ## TODO
 
-* Support for to change UniFi switch port profile
+* Support to change UniFi switch port profile.

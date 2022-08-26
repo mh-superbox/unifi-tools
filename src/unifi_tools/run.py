@@ -110,14 +110,12 @@ class UniFiTools:
                 await asyncio.sleep(reconnect_interval)
 
     @classmethod
-    def install(cls, assume_yes: bool):
+    def install(cls, config: Config, assume_yes: bool):
         src_config_path: Path = Path(__file__).parents[0] / "installer/etc/unifi"
         src_systemd_path: Path = (
             Path(__file__).parents[0] / f"installer/etc/systemd/system/{cls.SYSTEMD_SERVICE}.service"
         )
-        dest_config_path: Path = Path("/etc/unifi")
-
-        print(f"Copy config file to '{dest_config_path}'")
+        dest_config_path: Path = config.config_file_path.parent
 
         dirs_exist_ok: bool = False
         copy_config_files: bool = True
@@ -134,10 +132,11 @@ class UniFiTools:
                 copy_config_files = False
 
         if copy_config_files:
+            print(f"Copy config file to '{dest_config_path}'")
             shutil.copytree(src_config_path, dest_config_path, dirs_exist_ok=dirs_exist_ok)
 
         print(f"Copy systemd service '{cls.SYSTEMD_SERVICE}.service'")
-        shutil.copyfile(src_systemd_path, f"/etc/systemd/system/{cls.SYSTEMD_SERVICE}.service")
+        shutil.copyfile(src_systemd_path, f"{config.systemd_path}/{cls.SYSTEMD_SERVICE}.service")
 
         enable_and_start_systemd: str = "y"
 
@@ -169,17 +168,17 @@ def main():
     args = parse_args(sys.argv[1:])
 
     try:
+        config_overwrites: dict = {}
+
+        if args.config:
+            config_overwrites["config_file_path"] = Path(args.config)
+
+        config = Config(**config_overwrites)
+
         if args.install:
-            UniFiTools.install(assume_yes=args.yes)
+            UniFiTools.install(config=config, assume_yes=args.yes)
         else:
             loop = asyncio.new_event_loop()
-
-            config_overwrites: dict = {}
-
-            if args.config:
-                config_overwrites["config_file_path"] = Path(args.config)
-
-            config = Config(**config_overwrites)
 
             unifi_api = UniFiAPI(config=config)
             unifi_api.login()

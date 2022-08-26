@@ -93,4 +93,8 @@ class FeaturesMqttPlugin(BaseFeaturesMqttPlugin):
                     await self.mqtt_client.publish(topic, feature.state, qos=1, retain=True)
                     logger.info(LOG_MQTT_PUBLISH, topic, feature.state)
 
+                    topic: str = f"{feature.topic}/attributes"
+                    await self.mqtt_client.publish(topic, feature.json_attributes, qos=1, retain=True)
+                    logger.info(LOG_MQTT_PUBLISH, topic, feature.json_attributes)
+
             await asyncio.sleep(25e-3)

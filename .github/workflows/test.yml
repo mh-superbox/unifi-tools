@@ -38,7 +38,7 @@ jobs:
 
   coverage:
     needs: build
-    if: matrix.python-version == 3.8
+    if: matrix.python_version == 3.8
     name: Coverage
     runs-on: ubuntu-latest
     steps:

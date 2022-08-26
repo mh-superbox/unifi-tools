@@ -19,7 +19,7 @@ jobs:
           pip install build
           pipenv install --deploy --dev
       - name: Run tests
-        run: pipenv run pytest
+        run: pipenv run pytest --cov=src --cov-report=term-missing
       - name: Create coverage badge
         uses: tj-actions/coverage-badge-py@v1.8
       - name: Verify changed files

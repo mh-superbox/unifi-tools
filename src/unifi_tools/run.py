@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 import argparse
 import asyncio
+import shutil
 import signal
+import subprocess
 import sys
 import uuid
 from asyncio import Task
 from contextlib import AsyncExitStack
 from pathlib import Path
+from typing import Final
 from typing import Optional
 from typing import Set
 
@@ -29,6 +32,8 @@ disable_warnings(InsecureRequestWarning)
 
 
 class UniFiTools:
+    SYSTEMD_SERVICE: Final[str] = "unifi-tools"
+
     def __init__(self, unifi_devices: UniFiDevices):
         self.unifi_devices: UniFiDevices = unifi_devices
         self.config: Config = unifi_devices.config
@@ -106,7 +111,48 @@ class UniFiTools:
 
     @classmethod
     def install(cls, assume_yes: bool):
-        pass
+        src_config_path: Path = Path(__file__).parents[0] / "installer/etc/unifi"
+        src_systemd_path: Path = (
+            Path(__file__).parents[0] / f"installer/etc/systemd/system/{cls.SYSTEMD_SERVICE}.service"
+        )
+        dest_config_path: Path = Path("/etc/unifi")
+
+        print(f"Copy config file to '{dest_config_path}'")
+
+        dirs_exist_ok: bool = False
+        copy_config_files: bool = True
+
+        if dest_config_path.exists():
+            overwrite_config: str = "y"
+
+            if not assume_yes:
+                overwrite_config = input("\nOverwrite existing config file? [Y/n]")
+
+            if overwrite_config.lower() == "y":
+                dirs_exist_ok = True
+            else:
+                copy_config_files = False
+
+        if copy_config_files:
+            shutil.copytree(src_config_path, dest_config_path, dirs_exist_ok=dirs_exist_ok)
+
+        print(f"Copy systemd service '{cls.SYSTEMD_SERVICE}.service'")
+        shutil.copyfile(src_systemd_path, f"/etc/systemd/system/{cls.SYSTEMD_SERVICE}.service")
+
+        enable_and_start_systemd: str = "y"
+
+        if not assume_yes:
+            enable_and_start_systemd = input("\nEnable and start systemd service? [Y/n]")
+
+        if enable_and_start_systemd.lower() == "y":
+            print(f"Enable systemd service '{cls.SYSTEMD_SERVICE}.service'")
+            status = subprocess.check_output(f"systemctl enable --now {cls.SYSTEMD_SERVICE}", shell=True)
+
+            if status:
+                logger.info(status)
+        else:
+            print("\nYou can enable the systemd service with the command:")
+            print(f"systemctl enable --now {cls.SYSTEMD_SERVICE}")
 
 
 def parse_args(args):

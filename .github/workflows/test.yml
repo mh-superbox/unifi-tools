@@ -2,10 +2,9 @@ name: Test Python Package
 
 on:
   push:
-  workflow_call:
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -28,5 +27,5 @@ jobs:
   #      run: pipenv run flake8 $(git ls-files '*.py') --show-source --statistics
       - name: Lint with mypy
         run: pipenv run mypy $(git ls-files '*.py')
-      - name: Run tests
+      - name: Run pytest
         run: pipenv run pytest

@@ -24,6 +24,7 @@ types-requests = "*"
 pytest-mock = "*"
 responses = "*"
 pytest-asyncio = "*"
+coverage-badge = "*"
 
 [requires]
 python_version = "3.8"

@@ -29,12 +29,18 @@ jobs:
       - name: Lint with mypy
         run: pipenv run mypy $(git ls-files '*.py')
       - name: Run unit tests
-        run: pipenv run pytest --cov=src --cov-report=term-missing
+        run: pipenv run pytest --cov=src --cov-report=term-missing --junitxml=junit/test-results-${{ matrix.python-version }}.xml
       - name: Store coverage file
         uses: actions/upload-artifact@v3
         with:
           name: coverage
           path: .coverage
+      - name: Store pytest results
+        uses: actions/upload-artifact@v3
+        with:
+          name: pytest-results-${{ matrix.python-version }}
+          path: junit/test-results-${{ matrix.python-version }}.xml
+        if: ${{ always() }}
 
   coverage:
     needs: build

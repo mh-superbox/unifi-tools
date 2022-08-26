@@ -5,7 +5,7 @@ Control UniFi devices with MQTT commands. Optionally you can enable the Home Ass
 **Supported features:**
 
 * Turn on/off PoE for UniFi switch ports (Switch in Home Assistant)
-* Get the PoE states from UniFi switch ports (Binary sensor in Home Assistant)
+* Get the PoE modes from UniFi switch ports (Binary sensor in Home Assistant)
 
 ## Installation
 
@@ -50,7 +50,7 @@ You can set the settings in the `/etc/unifi/settings.yaml`.
 | `device_name` | The device name for the subscribe and publish topics. Default is the hostname. |
 
 ```yaml
-# control.yaml
+# settings.yaml
 device_name: UniFi
 ```
 
@@ -65,7 +65,7 @@ device_name: UniFi
 | `reconnect_interval` | Time between connection attempts. Default is `10`.                                                                                                                                                                      |
 
 ```yaml
-# control.yaml
+# settings.yaml
 mqtt:
   host: localhost
   port: 1883
@@ -83,7 +83,7 @@ mqtt:
 | `discovery_prefix` | The prefix for the discovery topic. Default is `homeassistant`. |
 
 ```yaml
-# control.yaml
+# settings.yaml
 homeassistant:
   enabled: true
   discovery_prefix: homeassistant
@@ -91,11 +91,43 @@ homeassistant:
 
 ### UniFi Controller
 
-WIP
+
+| Key        | Value                                                                            |
+|------------|----------------------------------------------------------------------------------|
+| `url`      | URL to the UniFi controller                                                      |
+| `port`     | The network port of the unifi controller host to connect to. Defaults is `8443`. |
+| `username` | Username for the unifi controller user.                                          |
+| `password` | Password for the unifi controller user.                                          |
+
+```yaml
+# settings.yaml
+unifi_controller:
+  url: localhost
+  port: 8443
+  username: username
+  password: password
+```
+
 
 ### Features
 
-WIP
+In features section you can define the PoE mode for a port from a UniFi switch.
+The UniFi switch is defined with its unique ID.
+
+| Key        | Value                        |
+|------------|------------------------------|
+| `port_idx` | Port number                  |
+| `poe_mode` | PoE mode (`pasv24`or `auto`) |
+
+```yaml
+# settings.yaml
+features:
+  6070cd81a61f7408a770607c:
+    ports:
+      - port_idx: 1
+        poe_mode: pasv24
+```
+
 
 ### Logging
 
@@ -104,7 +136,7 @@ WIP
 | `level` | Set level to `debug`, `info`, `warning` or `error`. Default is `info`. |
 
 ```yaml
-# control.yaml
+# settings.yaml
 logging:
   level: info
 ```
@@ -112,6 +144,13 @@ logging:
 ## Usage
 
 Available MQTT topics:
+
+### Features
+
+| Topic                                                  | Response/Request                              | Description                                                                                                                   |
+|--------------------------------------------------------|-----------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| `[device_name]/UNIQUE-UNIFI-SWITCH-ID-port-[1-x]/get`  | `{"poe_mode": "on"}` or `{"poe_mode": "off"}` | Get a string with the value `{"poe_mode": "on"}` or `{"poe_mode": "off"}` from this topic.                                    |
+| `[device_name]/UNIQUE-UNIFI-SWITCH-ID-port-[1-x]/set`  | `{"poe_mode": "on"}` or `{"poe_mode": "off"}` | Send a string with the value `{"poe_mode": "on"}` or `{"poe_mode": "off"} to this topic. This enable or disable the PoE mode. |
 
 ## TODO
 

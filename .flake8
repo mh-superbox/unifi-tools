@@ -3,4 +3,3 @@ max-line-length = 120
 max-complexity = 12
 
 extend-ignore = D,E501,W503,W504
-extend-select = B950

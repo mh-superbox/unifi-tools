@@ -1,4 +1,4 @@
-# Unifi Tools
+# UniFi Tools
 
 Control UniFi devices with MQTT commands. Optionally you can enable the Home Assistant MQTT discovery for binary sensors, switches.
 

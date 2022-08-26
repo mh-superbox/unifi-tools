@@ -1,4 +1,5 @@
 import logging
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -17,17 +18,24 @@ def logger():
 
 class ConfigLoader:
     def __init__(self):
-        self.temp_name: Path = Path(tempfile.NamedTemporaryFile().name)
+        self.temp_config_path: Path = Path(tempfile.mkdtemp())
+        self.temp_config_file_path: Path = self.temp_config_path / "settings.yml"
+
+        self.systemd_path = self.temp_config_path / "systemd/system"
+        self.systemd_path.mkdir(parents=True)
 
     def write_config(self, content: str):
-        with open(self.temp_name, "w") as f:
+        with open(self.temp_config_file_path, "w") as f:
             f.write(content)
 
     def get_config(self) -> Config:
-        return Config(config_file_path=self.temp_name)
+        return Config(
+            config_file_path=self.temp_config_file_path,
+            systemd_path=self.systemd_path,
+        )
 
     def cleanup(self):
-        self.temp_name.unlink()
+        shutil.rmtree(self.temp_config_path)
 
 
 @pytest.fixture()

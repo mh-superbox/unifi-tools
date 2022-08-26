@@ -1,3 +1,4 @@
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -11,14 +12,17 @@ from unittests.test_config_data import config_invalid_type
 
 class TestUnhappyPathConfig:
     def test_invalid_device_name(self, caplog: LogCaptureFixture):
-        tmp = tempfile.NamedTemporaryFile()
+        temp_config_path: Path = Path(tempfile.mkdtemp())
+        temp_config_file_path: Path = temp_config_path / "settings.yml"
 
-        with open(tmp.name, "w") as f:
+        with open(temp_config_file_path, "w") as f:
             f.write(config_invalid_device_name)
 
         with pytest.raises(SystemExit) as error:
-            Config(config_file_path=Path(tmp.name))
+            Config(config_file_path=temp_config_file_path)
             assert 1 == error.value
+
+        shutil.rmtree(temp_config_path)
 
         logs: list = [record.getMessage() for record in caplog.records]
 
@@ -28,14 +32,17 @@ class TestUnhappyPathConfig:
         )
 
     def test_invalid_type(self, caplog: LogCaptureFixture):
-        tmp = tempfile.NamedTemporaryFile()
+        temp_config_path: Path = Path(tempfile.mkdtemp())
+        temp_config_file_path: Path = temp_config_path / "settings.yml"
 
-        with open(tmp.name, "w") as f:
+        with open(temp_config_file_path, "w") as f:
             f.write(config_invalid_type)
 
         with pytest.raises(SystemExit) as error:
-            Config(config_file_path=Path(tmp.name))
+            Config(config_file_path=temp_config_file_path)
             assert 1 == error.value
+
+        shutil.rmtree(temp_config_path)
 
         logs: list = [record.getMessage() for record in caplog.records]
 

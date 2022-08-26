@@ -11,10 +11,9 @@ import pytest
 import responses
 from _pytest.logging import LogCaptureFixture
 from asyncio_mqtt import Client
+from conftest_data import CONFIG_CONTENT
 from responses import matchers
 from responses.registries import OrderedRegistry
-
-from conftest_data import CONFIG_CONTENT
 from unifi_tools.plugins.features import FeaturesMqttPlugin
 from unifi_tools.unifi import UniFiAPI
 from unifi_tools.unifi import UniFiDevices
@@ -116,7 +115,7 @@ class TestHappyPathFeaturesMqttPlugin(TestUniFiApi):
             assert '[MQTT] [mocked_unifi/MOCKED_ID-port-2/get] Publishing message: {"poe_mode": "off"}' in logs
             assert '[MQTT] [mocked_unifi/MOCKED_ID-port-3/get] Publishing message: {"poe_mode": "off"}' in logs
 
-            assert 12 == len(logs)
+            assert 15 == len(logs)
 
         loop = asyncio.new_event_loop()
         loop.run_until_complete(run())

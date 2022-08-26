@@ -71,6 +71,11 @@ class Feature(ABC):
         pass
 
     @property
+    @abstractmethod
+    def json_attributes(self) -> str:
+        pass
+
+    @property
     def state(self) -> str:
         return json.dumps(self.value)
 
@@ -95,10 +100,15 @@ class FeaturePort(Feature):
         self.port_info = port_info
 
     @property
-    def poe_mode(self) -> str:
+    def real_poe_mode(self) -> str:
         device_info = self.unifi_devices.unifi_device_map.get(self.unifi_device.id)
         port = device_info["ports"][self.port_info.idx]
-        poe_mode: str = port.poe_mode
+
+        return port.poe_mode
+
+    @property
+    def poe_mode(self) -> str:
+        poe_mode: str = self.real_poe_mode
 
         if poe_mode in [FeaturePoEState.POE24V, FeaturePoEState.POE]:
             poe_mode = FeaturePoEState.ON
@@ -132,6 +142,15 @@ class FeaturePort(Feature):
     @property
     def topic(self) -> str:
         return f"{self.config.device_name.lower()}/{self.unique_id}"
+
+    @property
+    def json_attributes(self) -> str:
+        _json_attributes: dict = {}
+
+        if self.real_poe_mode:
+            _json_attributes["poe_mode"] = self.real_poe_mode
+
+        return json.dumps(_json_attributes)
 
     def _get_real_poe_mode(self, poe_mode: str) -> str:
         # When state is "on" then check settings if PoE for this port is "auto" or "pasv24".

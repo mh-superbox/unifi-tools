@@ -43,6 +43,7 @@ class TestHappyPathFeatures(TestUniFiApi):
                     "unique_id": "MOCKED_ID-port-1",
                     "topic": "mocked_unifi/MOCKED_ID-port-1",
                     "state": '{"poe_mode": "on"}',
+                    "json_attributes": '{"poe_mode": "pasv24"}',
                     "changed": True,
                 },
             ),
@@ -56,6 +57,7 @@ class TestHappyPathFeatures(TestUniFiApi):
                     "unique_id": "MOCKED_ID-port-26",
                     "topic": "mocked_unifi/MOCKED_ID-port-26",
                     "state": "{}",
+                    "json_attributes": "{}",
                     "changed": False,
                 },
             ),
@@ -81,6 +83,7 @@ class TestHappyPathFeatures(TestUniFiApi):
         assert expected["unique_id"] == feature.unique_id
         assert expected["topic"] == feature.topic
         assert expected["state"] == feature.state
+        assert expected["json_attributes"] == feature.json_attributes
         assert expected["changed"] is feature.changed
 
     @responses.activate

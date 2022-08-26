@@ -99,6 +99,7 @@ class Config(ConfigBase):
     features: dict = field(default_factory=dict)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
     config_file_path: Path = field(default=Path("/etc/unifi/settings.yaml"))
+    systemd_path: Path = field(default=Path("/etc/systemd/system"))
 
     def __post_init__(self):
         _config: dict = self.get_config(self.config_file_path)

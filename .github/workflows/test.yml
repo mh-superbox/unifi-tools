@@ -25,22 +25,16 @@ jobs:
       - name: Check code format with black
         run: pipenv run black --diff --check $(git ls-files '*.py')
       - name: Lint with flake8
-        run: pipenv run flake8 $(git ls-files '*.py') --show-source --statistics
+        run: pipenv run flake8 --config .flake8 --show-source --statistics $(git ls-files '*.py')
       - name: Lint with mypy
         run: pipenv run mypy $(git ls-files '*.py')
       - name: Run unit tests
-        run: pipenv run pytest --cov=src --cov-report=term-missing --junitxml=junit/test-results-${{ matrix.python-version }}.xml
+        run: pipenv run pytest --cov=src --cov-report=term-missing
       - name: Store coverage file
         uses: actions/upload-artifact@v3
         with:
           name: coverage
           path: .coverage
-      - name: Store pytest results
-        uses: actions/upload-artifact@v3
-        with:
-          name: pytest-results-${{ matrix.python-version }}
-          path: junit/test-results-${{ matrix.python-version }}.xml
-        if: ${{ always() }}
 
   coverage:
     needs: build

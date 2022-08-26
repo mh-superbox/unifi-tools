@@ -1,5 +1,5 @@
 [![license-url](https://img.shields.io/npm/l/make-coverage-badge.svg)](https://opensource.org/licenses/MIT)
-![coverage-badge](coverage.svg)
+![coverage-badge](https://raw.githubusercontent.com/mh-superbox/unifi-tools/main/coverage.svg)
 ![Python 3.8](https://img.shields.io/badge/python-3.8-blue.svg)
 
 # UniFi Tools
@@ -154,8 +154,8 @@ Available MQTT topics:
 | Topic                                                  | Response/Request                              | Description                                                                                                                   |
 |--------------------------------------------------------|-----------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
 | `[device_name]/UNIQUE-UNIFI-SWITCH-ID-port-[1-x]/get`  | `{"poe_mode": "on"}` or `{"poe_mode": "off"}` | Get a string with the value `{"poe_mode": "on"}` or `{"poe_mode": "off"}` from this topic.                                    |
-| `[device_name]/UNIQUE-UNIFI-SWITCH-ID-port-[1-x]/set`  | `{"poe_mode": "on"}` or `{"poe_mode": "off"}` | Send a string with the value `{"poe_mode": "on"}` or `{"poe_mode": "off"} to this topic. This enable or disable the PoE mode. |
+| `[device_name]/UNIQUE-UNIFI-SWITCH-ID-port-[1-x]/set`  | `{"poe_mode": "on"}` or `{"poe_mode": "off"}` | Send a string with the value `{"poe_mode": "on"}` or `{"poe_mode": "off"}` to this topic. This enable or disable the PoE mode. |
 
 ## TODO
 
-* Support for to change UniFi switch port profile
+* Support to change UniFi switch port profile.

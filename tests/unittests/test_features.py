@@ -82,7 +82,6 @@ class TestHappyPathFeatures(TestUniFiApi):
         assert expected["friendly_name"] == feature.friendly_name
         assert expected["unique_id"] == feature.unique_id
         assert expected["topic"] == feature.topic
-        assert expected["state"] == feature.state
         assert expected["json_attributes"] == feature.json_attributes
         assert expected["changed"] is feature.changed
 

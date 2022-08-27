@@ -75,9 +75,9 @@ class Feature(ABC):
     def json_attributes(self) -> str:
         pass
 
-    @property
-    def state(self) -> str:
-        return json.dumps(self.value)
+    # @property
+    # def state(self) -> str:
+    #     return json.dumps(self.value)
 
     @property
     def changed(self) -> bool:

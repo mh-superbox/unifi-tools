@@ -79,15 +79,15 @@ class TestHappyPathHassSwitchesMqttPlugin(TestUniFiApi):
             assert "[API] Reading adopted devices." in logs
 
             assert (
-                '[MQTT] [homeassistant/switch/mocked_unifi/MOCKED_ID-port-1/config] Publishing message: {"name": "MOCKED Port 1", "unique_id": "mocked_unifi-MOCKED_ID-port-1", "object_id": "mocked_unifi-MOCKED_ID-port-1", "command_topic": "mocked_unifi/MOCKED_ID-port-1/set", "state_topic": "mocked_unifi/MOCKED_ID-port-1/get", "value_template": "{{ value_json.poe_mode }}", "state_on": "on", "state_off": "off", "payload_on": "{ \\"poe_mode\\": \\"on\\" }", "payload_off": "{ \\"poe_mode\\": \\"off\\" }", "qos": 2, "device": {"name": "MOCKED SWITCH", "identifiers": "MOCKED_ID", "model": "MOCKED MODEL", "sw_version": "MOCKED 6.2.14.13855", "manufacturer": "Ubiquiti Inc."}}'
+                '[MQTT] [homeassistant/switch/mocked_unifi/MOCKED_ID-port-1/config] Publishing message: {"name": "MOCKED Port 1", "unique_id": "mocked_unifi-MOCKED_ID-port-1", "object_id": "mocked_unifi-MOCKED_ID-port-1", "command_topic": "mocked_unifi/MOCKED_ID-port-1/set", "state_topic": "mocked_unifi/MOCKED_ID-port-1/get", "value_template": "{% if value_json.poe_mode in [\'auto\', \'pasv24\'] %}on{% else %}off{% endif %}", "state_on": "on", "state_off": "off", "payload_on": "{\\"poe_mode\\": \\"on\\"}", "payload_off": "{\\"poe_mode\\": \\"off\\"}", "qos": 2, "device": {"name": "MOCKED SWITCH", "identifiers": "MOCKED_ID", "model": "MOCKED MODEL", "sw_version": "MOCKED 6.2.14.13855", "manufacturer": "Ubiquiti Inc."}}'
                 in logs
             )
             assert (
-                '[MQTT] [homeassistant/switch/mocked_unifi/MOCKED_ID-port-2/config] Publishing message: {"name": "MOCKED Port 2", "unique_id": "mocked_unifi-MOCKED_ID-port-2", "object_id": "mocked_unifi-MOCKED_ID-port-2", "command_topic": "mocked_unifi/MOCKED_ID-port-2/set", "state_topic": "mocked_unifi/MOCKED_ID-port-2/get", "value_template": "{{ value_json.poe_mode }}", "state_on": "on", "state_off": "off", "payload_on": "{ \\"poe_mode\\": \\"on\\" }", "payload_off": "{ \\"poe_mode\\": \\"off\\" }", "qos": 2, "device": {"name": "MOCKED SWITCH", "identifiers": "MOCKED_ID", "model": "MOCKED MODEL", "sw_version": "MOCKED 6.2.14.13855", "manufacturer": "Ubiquiti Inc."}}'
+                '[MQTT] [homeassistant/switch/mocked_unifi/MOCKED_ID-port-2/config] Publishing message: {"name": "MOCKED Port 2", "unique_id": "mocked_unifi-MOCKED_ID-port-2", "object_id": "mocked_unifi-MOCKED_ID-port-2", "command_topic": "mocked_unifi/MOCKED_ID-port-2/set", "state_topic": "mocked_unifi/MOCKED_ID-port-2/get", "value_template": "{% if value_json.poe_mode in [\'auto\', \'pasv24\'] %}on{% else %}off{% endif %}", "state_on": "on", "state_off": "off", "payload_on": "{\\"poe_mode\\": \\"on\\"}", "payload_off": "{\\"poe_mode\\": \\"off\\"}", "qos": 2, "device": {"name": "MOCKED SWITCH", "identifiers": "MOCKED_ID", "model": "MOCKED MODEL", "sw_version": "MOCKED 6.2.14.13855", "manufacturer": "Ubiquiti Inc."}}'
                 in logs
             )
             assert (
-                '[MQTT] [homeassistant/switch/mocked_unifi/MOCKED_ID-port-3/config] Publishing message: {"name": "MOCKED Port 3", "unique_id": "mocked_unifi-MOCKED_ID-port-3", "object_id": "mocked_unifi-MOCKED_ID-port-3", "command_topic": "mocked_unifi/MOCKED_ID-port-3/set", "state_topic": "mocked_unifi/MOCKED_ID-port-3/get", "value_template": "{{ value_json.poe_mode }}", "state_on": "on", "state_off": "off", "payload_on": "{ \\"poe_mode\\": \\"on\\" }", "payload_off": "{ \\"poe_mode\\": \\"off\\" }", "qos": 2, "device": {"name": "MOCKED SWITCH", "identifiers": "MOCKED_ID", "model": "MOCKED MODEL", "sw_version": "MOCKED 6.2.14.13855", "manufacturer": "Ubiquiti Inc."}}'
+                '[MQTT] [homeassistant/switch/mocked_unifi/MOCKED_ID-port-3/config] Publishing message: {"name": "MOCKED Port 3", "unique_id": "mocked_unifi-MOCKED_ID-port-3", "object_id": "mocked_unifi-MOCKED_ID-port-3", "command_topic": "mocked_unifi/MOCKED_ID-port-3/set", "state_topic": "mocked_unifi/MOCKED_ID-port-3/get", "value_template": "{% if value_json.poe_mode in [\'auto\', \'pasv24\'] %}on{% else %}off{% endif %}", "state_on": "on", "state_off": "off", "payload_on": "{\\"poe_mode\\": \\"on\\"}", "payload_off": "{\\"poe_mode\\": \\"off\\"}", "qos": 2, "device": {"name": "MOCKED SWITCH", "identifiers": "MOCKED_ID", "model": "MOCKED MODEL", "sw_version": "MOCKED 6.2.14.13855", "manufacturer": "Ubiquiti Inc."}}'
                 in logs
             )
 
@@ -120,11 +120,13 @@ class TestHappyPathHassSwitchesMqttPlugin(TestUniFiApi):
         assert "mocked_unifi-MOCKED_ID-port-1" == message["object_id"]
         assert "mocked_unifi/MOCKED_ID-port-1/set" == message["command_topic"]
         assert "mocked_unifi/MOCKED_ID-port-1/get" == message["state_topic"]
-        assert "{{ value_json.poe_mode }}" == message["value_template"]
+        assert (
+            "{% if value_json.poe_mode in ['auto', 'pasv24'] %}on{% else %}off{% endif %}" == message["value_template"]
+        )
         assert "on" == message["state_on"]
         assert "off" == message["state_off"]
-        assert '{ "poe_mode": "on" }' == message["payload_on"]
-        assert '{ "poe_mode": "off" }' == message["payload_off"]
+        assert '{"poe_mode": "on"}' == message["payload_on"]
+        assert '{"poe_mode": "off"}' == message["payload_off"]
         assert 2 == message["qos"]
         assert "MOCKED SWITCH" == message["device"]["name"]
         assert "MOCKED_ID" == message["device"]["identifiers"]

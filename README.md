@@ -151,10 +151,10 @@ Available MQTT topics:
 
 ### Features
 
-| Topic                                                  | Response/Request                              | Description                                                                                                                   |
-|--------------------------------------------------------|-----------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
-| `[device_name]/UNIQUE-UNIFI-SWITCH-ID-port-[1-x]/get`  | `{"poe_mode": "on"}` or `{"poe_mode": "off"}` | Get a string with the value `{"poe_mode": "on"}` or `{"poe_mode": "off"}` from this topic.                                    |
-| `[device_name]/UNIQUE-UNIFI-SWITCH-ID-port-[1-x]/set`  | `{"poe_mode": "on"}` or `{"poe_mode": "off"}` | Send a string with the value `{"poe_mode": "on"}` or `{"poe_mode": "off"}` to this topic. This enable or disable the PoE mode. |
+| Topic                                                 | Description                                                                                                                    |
+|-------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| `[device_name]/UNIQUE-UNIFI-SWITCH-ID-port-[1-x]/get` | Get a JSON string with port settings from this topic.                                                                          |
+| `[device_name]/UNIQUE-UNIFI-SWITCH-ID-port-[1-x]/set` | Send a string with the value `{"poe_mode": "on"}` or `{"poe_mode": "off"}` to this topic. This enable or disable the PoE mode. |
 
 ## TODO
 

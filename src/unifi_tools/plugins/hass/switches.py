@@ -12,6 +12,7 @@ from unifi_tools.config import LOG_MQTT_PUBLISH
 from unifi_tools.config import logger
 from unifi_tools.features import FeatureConst
 from unifi_tools.features import FeatureMap
+from unifi_tools.features import FeaturePoEState
 from unifi_tools.plugins.hass.discover import HassBaseDiscovery
 from unifi_tools.unifi import UniFiDevices
 
@@ -29,6 +30,7 @@ class HassSwitchesDiscovery(HassBaseDiscovery):
 
     def _get_discovery(self, feature) -> Tuple[str, dict]:
         topic: str = f"{self.config.homeassistant.discovery_prefix}/switch/{feature.topic}/config"
+        poe_on_states: str = "'" + FeaturePoEState.POE + "', '" + FeaturePoEState.POE24V + "'"
 
         message = {
             "name": f"{feature.friendly_name}",
@@ -36,11 +38,11 @@ class HassSwitchesDiscovery(HassBaseDiscovery):
             "object_id": f"{self.config.device_name.lower()}-{feature.unique_id}",
             "command_topic": f"{feature.topic}/set",
             "state_topic": f"{feature.topic}/get",
-            "value_template": "{{ value_json.poe_mode }}",
+            "value_template": "{% if value_json.poe_mode in [" + poe_on_states + "] %}on{% else %}off{% endif %}",
             "state_on": "on",
             "state_off": "off",
-            "payload_on": """{ "poe_mode": "on" }""",
-            "payload_off": """{ "poe_mode": "off" }""",
+            "payload_on": """{"poe_mode": "on"}""",
+            "payload_off": """{"poe_mode": "off"}""",
             "qos": 2,
             "device": {
                 "name": feature.unifi_device.info["name"],

@@ -10,7 +10,7 @@ from typing import AsyncIterable
 from typing import List
 from typing import Set
 
-from unifi_tools.config import LOG_MQTT_INVALIDE_SUBSCRIBE
+from unifi_tools.config import LOG_MQTT_INVALID_SUBSCRIBE
 from unifi_tools.config import LOG_MQTT_PUBLISH
 from unifi_tools.config import LOG_MQTT_SUBSCRIBE
 from unifi_tools.config import LOG_MQTT_SUBSCRIBE_TOPIC
@@ -77,7 +77,7 @@ class FeaturesMqttPlugin(BaseFeaturesMqttPlugin):
             try:
                 data = json.loads(value)
             except ValueError:
-                logger.error(LOG_MQTT_INVALIDE_SUBSCRIBE, topic, value)
+                logger.error(LOG_MQTT_INVALID_SUBSCRIBE, topic, value)
 
             if data:
                 feature.set_state(data)
@@ -90,10 +90,6 @@ class FeaturesMqttPlugin(BaseFeaturesMqttPlugin):
             for feature in self.features.by_feature_type(self.publish_feature_types):
                 if feature.changed:
                     topic: str = f"{feature.topic}/get"
-                    await self.mqtt_client.publish(topic, feature.state, qos=1, retain=True)
-                    logger.info(LOG_MQTT_PUBLISH, topic, feature.state)
-
-                    topic: str = f"{feature.topic}/attributes"
                     await self.mqtt_client.publish(topic, feature.json_attributes, qos=1, retain=True)
                     logger.info(LOG_MQTT_PUBLISH, topic, feature.json_attributes)
 

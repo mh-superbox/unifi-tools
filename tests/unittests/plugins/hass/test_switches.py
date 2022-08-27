@@ -13,6 +13,7 @@ from asyncio_mqtt import Client
 from responses import matchers
 from responses.registries import OrderedRegistry
 
+from conftest import ConfigLoader
 from conftest_data import CONFIG_CONTENT
 from unifi_tools.plugins.hass.switches import HassSwitchesDiscovery
 from unifi_tools.plugins.hass.switches import HassSwitchesMqttPlugin
@@ -44,7 +45,7 @@ class MockMQTTMessages:
 class TestHappyPathHassSwitchesMqttPlugin(TestUniFiApi):
     @responses.activate(registry=OrderedRegistry)
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_init_tasks(self, config_loader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_init_tasks(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         async def run():
             mock_list_all_devices_response_1 = responses.get(
                 url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
@@ -96,7 +97,7 @@ class TestHappyPathHassSwitchesMqttPlugin(TestUniFiApi):
 
     @responses.activate(registry=OrderedRegistry)
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_discovery_message(self, config_loader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_discovery_message(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_list_all_devices_response_1 = responses.get(
             url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
             json=json.loads(devices_json_response_2),

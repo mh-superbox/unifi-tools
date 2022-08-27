@@ -8,6 +8,7 @@ from requests import Response
 from responses import matchers
 from responses.registries import OrderedRegistry
 
+from conftest import ConfigLoader
 from conftest_data import CONFIG_CONTENT
 from unifi_tools.config import Config
 from unifi_tools.unifi import UniFiAPI
@@ -40,7 +41,7 @@ class TestHappyPathUniFiApi(TestUniFiApi):
         ],
     )
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_controller_url(self, config_loader, url: str, port: int, expected: str):
+    def test_controller_url(self, config_loader: ConfigLoader, url: str, port: int, expected: str):
         config: Config = config_loader.get_config()
 
         config.unifi_controller.url = url
@@ -53,7 +54,7 @@ class TestHappyPathUniFiApi(TestUniFiApi):
 
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_login(self, config_loader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_login(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.post(
             url=f"{unifi_api.controller_url}{UniFiAPI.LOGIN_ENDPOINT}",
             json={
@@ -81,7 +82,7 @@ class TestHappyPathUniFiApi(TestUniFiApi):
 
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_logout(self, config_loader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_logout(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.post(
             url=f"{unifi_api.controller_url}{UniFiAPI.LOGOUT_ENDPOINT}",
             json={
@@ -115,7 +116,7 @@ class TestHappyPathUniFiApi(TestUniFiApi):
 
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_list_all_devices(self, config_loader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_list_all_devices(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.get(
             url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
             json=json.loads(devices_json_response),
@@ -139,7 +140,7 @@ class TestHappyPathUniFiApi(TestUniFiApi):
 
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_update_device(self, config_loader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_update_device(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.put(
             url=f"{unifi_api.controller_url}{UniFiAPI.REST_DEVICE_ENDPOINT}/MOCKED_ID",
             json=json.loads(devices_json_response),
@@ -170,7 +171,7 @@ class TestHappyPathUniFiApi(TestUniFiApi):
 
     @responses.activate(registry=OrderedRegistry)
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_reconnect(self, config_loader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_reconnect(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_list_all_devices_failed_response = responses.get(
             url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
             json={
@@ -227,7 +228,7 @@ class TestHappyPathUniFiApi(TestUniFiApi):
 class TestUnhappyPathUniFiApi(TestUniFiApi):
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_exception_http_error(self, config_loader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_exception_http_error(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.post(
             url=f"{unifi_api.controller_url}{UniFiAPI.LOGIN_ENDPOINT}",
             match=[matchers.header_matcher(response_header)],
@@ -247,7 +248,9 @@ class TestUnhappyPathUniFiApi(TestUniFiApi):
 
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_exception_connection_error(self, config_loader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_exception_connection_error(
+        self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture
+    ):
         mock_response = responses.post(
             url=f"{unifi_api.controller_url}{UniFiAPI.LOGIN_ENDPOINT}",
             body=requests.ConnectionError("MOCKED CONNECTION ERROR"),
@@ -266,7 +269,7 @@ class TestUnhappyPathUniFiApi(TestUniFiApi):
 
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_json_decode_error(self, config_loader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_json_decode_error(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.post(
             url=f"{unifi_api.controller_url}{UniFiAPI.LOGIN_ENDPOINT}",
             match=[matchers.header_matcher(response_header)],

@@ -13,9 +13,9 @@ from conftest_data import CONFIG_CONTENT
 from unifi_tools.config import Config
 from unifi_tools.unifi import UniFiAPI
 from unifi_tools.unifi import UniFiAPIResult
-from unittests.test_unifi_api_data import devices_json_response
-from unittests.test_unifi_api_data import port_overrides_payload
-from unittests.test_unifi_api_data import response_header
+from unittests.test_unifi_api_data import DEVICES_JSON_RESPONSE
+from unittests.test_unifi_api_data import PORT_OVERRIDES_PAYLOAD
+from unittests.test_unifi_api_data import RESPONSE_HEADER
 
 
 class TestUniFiApi:
@@ -61,7 +61,7 @@ class TestHappyPathUniFiApi(TestUniFiApi):
                 "meta": {"rc": "ok"},
                 "data": [],
             },
-            match=[matchers.header_matcher(response_header)],
+            match=[matchers.header_matcher(RESPONSE_HEADER)],
         )
 
         responses.add(mock_response)
@@ -119,8 +119,8 @@ class TestHappyPathUniFiApi(TestUniFiApi):
     def test_list_all_devices(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.get(
             url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
-            json=json.loads(devices_json_response),
-            match=[matchers.header_matcher(response_header)],
+            json=json.loads(DEVICES_JSON_RESPONSE),
+            match=[matchers.header_matcher(RESPONSE_HEADER)],
         )
 
         responses.add(mock_response)
@@ -143,16 +143,16 @@ class TestHappyPathUniFiApi(TestUniFiApi):
     def test_update_device(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.put(
             url=f"{unifi_api.controller_url}{UniFiAPI.REST_DEVICE_ENDPOINT}/MOCKED_ID",
-            json=json.loads(devices_json_response),
+            json=json.loads(DEVICES_JSON_RESPONSE),
             match=[
-                matchers.header_matcher(response_header),
-                matchers.json_params_matcher(json.loads(port_overrides_payload)),
+                matchers.header_matcher(RESPONSE_HEADER),
+                matchers.json_params_matcher(json.loads(PORT_OVERRIDES_PAYLOAD)),
             ],
         )
 
         responses.add(mock_response)
         result, response = unifi_api.update_device(
-            device_id="MOCKED_ID", port_overrides=json.loads(port_overrides_payload)
+            device_id="MOCKED_ID", port_overrides=json.loads(PORT_OVERRIDES_PAYLOAD)
         )
 
         logs: list = [record.getMessage() for record in caplog.records]
@@ -181,7 +181,7 @@ class TestHappyPathUniFiApi(TestUniFiApi):
                 },
                 "data": [],
             },
-            match=[matchers.header_matcher(response_header)],
+            match=[matchers.header_matcher(RESPONSE_HEADER)],
             status=requests.codes.unauthorized,
         )
 
@@ -191,13 +191,13 @@ class TestHappyPathUniFiApi(TestUniFiApi):
                 "meta": {"rc": "ok"},
                 "data": [],
             },
-            match=[matchers.header_matcher(response_header)],
+            match=[matchers.header_matcher(RESPONSE_HEADER)],
         )
 
         mock_list_all_devices_response = responses.get(
             url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
-            json=json.loads(devices_json_response),
-            match=[matchers.header_matcher(response_header)],
+            json=json.loads(DEVICES_JSON_RESPONSE),
+            match=[matchers.header_matcher(RESPONSE_HEADER)],
         )
 
         responses.add(mock_list_all_devices_failed_response)
@@ -231,7 +231,7 @@ class TestUnhappyPathUniFiApi(TestUniFiApi):
     def test_exception_http_error(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.post(
             url=f"{unifi_api.controller_url}{UniFiAPI.LOGIN_ENDPOINT}",
-            match=[matchers.header_matcher(response_header)],
+            match=[matchers.header_matcher(RESPONSE_HEADER)],
             status=requests.codes.bad_gateway,
         )
 
@@ -272,7 +272,7 @@ class TestUnhappyPathUniFiApi(TestUniFiApi):
     def test_json_decode_error(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.post(
             url=f"{unifi_api.controller_url}{UniFiAPI.LOGIN_ENDPOINT}",
-            match=[matchers.header_matcher(response_header)],
+            match=[matchers.header_matcher(RESPONSE_HEADER)],
             body="INVALID_JSON",
         )
 

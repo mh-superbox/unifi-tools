@@ -6,8 +6,8 @@ import pytest
 from _pytest.logging import LogCaptureFixture
 
 from unifi_tools.config import Config
-from unittests.test_config_data import config_invalid_device_name
-from unittests.test_config_data import config_invalid_type
+from unittests.test_config_data import CONFIG_INVALID_TYPE
+from unittests.test_config_data import CONFIG_INVALID_DEVICE_NAME
 
 
 class TestUnhappyPathConfig:
@@ -16,7 +16,7 @@ class TestUnhappyPathConfig:
         temp_config_file_path: Path = temp_config_path / "settings.yml"
 
         with open(temp_config_file_path, "w") as f:
-            f.write(config_invalid_device_name)
+            f.write(CONFIG_INVALID_DEVICE_NAME)
 
         with pytest.raises(SystemExit) as error:
             Config(config_file_path=temp_config_file_path)
@@ -36,7 +36,7 @@ class TestUnhappyPathConfig:
         temp_config_file_path: Path = temp_config_path / "settings.yml"
 
         with open(temp_config_file_path, "w") as f:
-            f.write(config_invalid_type)
+            f.write(CONFIG_INVALID_TYPE)
 
         with pytest.raises(SystemExit) as error:
             Config(config_file_path=temp_config_file_path)

@@ -1,4 +1,8 @@
-config_invalid_device_name: str = """device_name: Invalid Device Name
+from typing import Final
+
+CONFIG_INVALID_DEVICE_NAME: Final[
+    str
+] = """device_name: Invalid Device Name
 mqtt:
   host: localhost
   port: 1883
@@ -23,7 +27,9 @@ logging:
   level: debug
 """
 
-config_invalid_type: str = """device_name: MOCKED_DEVICE
+CONFIG_INVALID_TYPE: Final[
+    str
+] = """device_name: MOCKED_DEVICE
 mqtt:
   host: localhost
   port: 1883

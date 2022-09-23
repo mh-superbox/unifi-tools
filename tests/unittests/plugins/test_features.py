@@ -22,7 +22,7 @@ from unittests.plugins.test_features_data import devices_json_response_1
 from unittests.plugins.test_features_data import devices_json_response_2
 from unittests.plugins.test_features_data import port_overrides_payload
 from unittests.test_unifi_api import TestUniFiApi
-from unittests.test_unifi_api_data import response_header
+from unittests.test_unifi_api_data import RESPONSE_HEADER
 
 
 class MockMQTTMessage(NamedTuple):
@@ -51,20 +51,20 @@ class TestHappyPathFeaturesMqttPlugin(TestUniFiApi):
             mock_list_all_devices_response_1 = responses.get(
                 url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
                 json=json.loads(devices_json_response_2),
-                match=[matchers.header_matcher(response_header)],
+                match=[matchers.header_matcher(RESPONSE_HEADER)],
             )
 
             mock_list_all_devices_response_2 = responses.get(
                 url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
                 json=json.loads(devices_json_response_1),
-                match=[matchers.header_matcher(response_header)],
+                match=[matchers.header_matcher(RESPONSE_HEADER)],
             )
 
             mock_update_device_response = responses.put(
                 url=f"{unifi_api.controller_url}{UniFiAPI.REST_DEVICE_ENDPOINT}/MOCKED_ID",
                 json=json.loads(devices_json_response_2),
                 match=[
-                    matchers.header_matcher(response_header),
+                    matchers.header_matcher(RESPONSE_HEADER),
                     matchers.json_params_matcher(json.loads(port_overrides_payload)),
                 ],
             )

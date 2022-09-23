@@ -12,10 +12,10 @@ from unifi_tools.unifi import UniFiAPI
 from unifi_tools.unifi import UniFiDevice
 from unifi_tools.unifi import UniFiDevices
 from unittests.test_unifi_api import TestUniFiApi
-from unittests.test_unifi_api_data import devices_json_response
-from unittests.test_unifi_api_data import response_header
-from unittests.test_unifi_api_data import updated_port_overrides_payload
-from unittests.test_unifi_api_data import updated_port_overrides_with_custom_feature_settings_payload
+from unittests.test_unifi_api_data import DEVICES_JSON_RESPONSE
+from unittests.test_unifi_api_data import UPDATED_PORT_OVERRIDES_PAYLOAD
+from unittests.test_unifi_api_data import UPDATED_PORT_OVERRIDES_WITH_CUSTOM_FEATURE_SETTINGS_PAYLOAD
+from unittests.test_unifi_api_data import RESPONSE_HEADER
 
 
 class TestHappyPathFeatures(TestUniFiApi):
@@ -24,8 +24,8 @@ class TestHappyPathFeatures(TestUniFiApi):
     def setup(self, unifi_api: UniFiAPI):
         mock_response = responses.get(
             url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
-            json=json.loads(devices_json_response),
-            match=[matchers.header_matcher(response_header)],
+            json=json.loads(DEVICES_JSON_RESPONSE),
+            match=[matchers.header_matcher(RESPONSE_HEADER)],
         )
 
         responses.add(mock_response)
@@ -92,9 +92,9 @@ class TestHappyPathFeatures(TestUniFiApi):
     @pytest.mark.parametrize(
         "port_idx, poe_mode, payload, expected",
         [
-            (1, FeaturePoEState.POE24V, updated_port_overrides_payload, False),
-            (2, FeaturePoEState.ON, updated_port_overrides_payload, True),
-            (3, FeaturePoEState.ON, updated_port_overrides_with_custom_feature_settings_payload, False),
+            (1, FeaturePoEState.POE24V, UPDATED_PORT_OVERRIDES_PAYLOAD, False),
+            (2, FeaturePoEState.ON, UPDATED_PORT_OVERRIDES_PAYLOAD, True),
+            (3, FeaturePoEState.ON, UPDATED_PORT_OVERRIDES_WITH_CUSTOM_FEATURE_SETTINGS_PAYLOAD, False),
         ],
     )
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
@@ -109,9 +109,9 @@ class TestHappyPathFeatures(TestUniFiApi):
     ):
         mock_response = responses.put(
             url=f"{unifi_api.controller_url}{UniFiAPI.REST_DEVICE_ENDPOINT}/MOCKED_ID",
-            json=json.loads(devices_json_response),
+            json=json.loads(DEVICES_JSON_RESPONSE),
             match=[
-                matchers.header_matcher(response_header),
+                matchers.header_matcher(RESPONSE_HEADER),
                 matchers.json_params_matcher(json.loads(payload)),
             ],
         )

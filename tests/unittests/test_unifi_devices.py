@@ -15,10 +15,10 @@ from unifi_tools.unifi import UniFiAPI
 from unifi_tools.unifi import UniFiDevices
 from unifi_tools.unifi import UniFiPort
 from unittests.test_unifi_api import TestUniFiApi
-from unittests.test_unifi_api_data import devices_json_response
-from unittests.test_unifi_api_data import devices_not_adopted_json_response
-from unittests.test_unifi_api_data import response_header
-from unittests.test_unifi_devices_data import feature_map_repr
+from unittests.test_unifi_api_data import DEVICES_JSON_RESPONSE
+from unittests.test_unifi_api_data import DEVICES_NOT_ADOPTED_JSON_RESPONSE
+from unittests.test_unifi_api_data import RESPONSE_HEADER
+from unittests.test_unifi_devices_data import FEATURE_MAP_REPR
 
 
 class TestHappyPathUniFiDevices(TestUniFiApi):
@@ -28,8 +28,8 @@ class TestHappyPathUniFiDevices(TestUniFiApi):
     def setup(self, config_loader: ConfigLoader, unifi_api: UniFiAPI):
         mock_response = responses.get(
             url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
-            json=json.loads(devices_json_response),
-            match=[matchers.header_matcher(response_header)],
+            json=json.loads(DEVICES_JSON_RESPONSE),
+            match=[matchers.header_matcher(RESPONSE_HEADER)],
         )
 
         responses.add(mock_response)
@@ -84,7 +84,7 @@ class TestHappyPathUniFiDevices(TestUniFiApi):
         feature = next(features)
         ports = unifi_devices.features[FeatureConst.PORT]
 
-        assert feature_map_repr == str(unifi_devices.features)
+        assert FEATURE_MAP_REPR == str(unifi_devices.features)
         assert isinstance(features, Iterator)
         assert isinstance(ports, list)
         assert isinstance(feature, FeaturePort)
@@ -99,8 +99,8 @@ class TestUnhappyPathUniFiDevices(TestUniFiApi):
     def test_device_info_not_adopted(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.get(
             url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
-            json=json.loads(devices_not_adopted_json_response),
-            match=[matchers.header_matcher(response_header)],
+            json=json.loads(DEVICES_NOT_ADOPTED_JSON_RESPONSE),
+            match=[matchers.header_matcher(RESPONSE_HEADER)],
         )
 
         responses.add(mock_response)

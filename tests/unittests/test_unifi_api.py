@@ -27,7 +27,6 @@ class TestUniFiApi:
         config.unifi_controller.port = 443
 
         api = UniFiAPI(config=config)
-        config_loader.cleanup()
 
         return api
 
@@ -49,8 +48,6 @@ class TestHappyPathUniFiApi(TestUniFiApi):
 
         unifi_api = UniFiAPI(config=config)
         assert expected == unifi_api.controller_url
-
-        config_loader.cleanup()
 
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)

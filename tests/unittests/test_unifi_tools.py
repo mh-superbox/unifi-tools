@@ -59,8 +59,6 @@ class TestHappyPathUniFiTools:
             assert "MOCKED STATUS" in logs
 
         try:
-            assert expected % config_loader.temp_config_path == capsys.readouterr().out
+            assert expected % config_loader.temp == capsys.readouterr().out
         except TypeError:
             assert expected == capsys.readouterr().out
-
-        config_loader.cleanup()

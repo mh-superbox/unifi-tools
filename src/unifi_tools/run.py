@@ -10,6 +10,7 @@ from asyncio import Task
 from contextlib import AsyncExitStack
 from pathlib import Path
 from typing import Final
+from typing import List
 from typing import Optional
 from typing import Set
 
@@ -19,8 +20,11 @@ from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
 
 from unifi_tools.config import Config
+from unifi_tools.config import ConfigException
+from unifi_tools.config import LogPrefix
 from unifi_tools.config import logger
 from unifi_tools.helpers import cancel_tasks
+from unifi_tools.logging import LOG_LEVEL
 from unifi_tools.plugins.features import FeaturesMqttPlugin
 from unifi_tools.plugins.hass.binary_sensors import HassBinarySensorsMqttPlugin
 from unifi_tools.plugins.hass.switches import HassSwitchesMqttPlugin
@@ -39,7 +43,7 @@ class UniFiTools:
         self.config: Config = unifi_devices.config
 
         self._mqtt_client_id: str = f"{self.config.device_name.lower()}-{uuid.uuid4()}"
-        logger.info("[MQTT] Client ID: %s", self._mqtt_client_id)
+        logger.info("%s Client ID: %s", LogPrefix.MQTT, self._mqtt_client_id)
 
         self._retry_reconnect: int = 0
 
@@ -57,7 +61,9 @@ class UniFiTools:
             await stack.enter_async_context(mqtt_client)
             self._retry_reconnect = 0
 
-            logger.info("[MQTT] Connected to broker at '%s:%s'", self.config.mqtt.host, self.config.mqtt.port)
+            logger.info(
+                "%s Connected to broker at '%s:%s'", LogPrefix.MQTT, self.config.mqtt.host, self.config.mqtt.port
+            )
 
             features = FeaturesMqttPlugin(unifi_devices=self.unifi_devices, mqtt_client=mqtt_client)
             features_tasks = await features.init_tasks(stack)
@@ -76,14 +82,6 @@ class UniFiTools:
 
             await asyncio.gather(*tasks)
 
-    @classmethod
-    def cancel_tasks(cls):
-        for task in asyncio.all_tasks():
-            if task.done():
-                continue
-
-            task.cancel()
-
     async def run(self):
         self.unifi_devices.read_devices()
 
@@ -92,7 +90,7 @@ class UniFiTools:
 
         while True:
             try:
-                logger.info("[MQTT] Connecting to broker ...")
+                logger.info("%s Connecting to broker ...", LogPrefix.MQTT)
                 await self._init_tasks()
             except MqttError as error:
                 logger.error(
@@ -159,6 +157,13 @@ def parse_args(args):
     parser.add_argument("-c", "--config", help="path to configuration file")
     parser.add_argument("-i", "--install", action="store_true", help="install unifi tools")
     parser.add_argument("-y", "--yes", action="store_true", help="automatic yes to install prompts")
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help=f"verbose mode: multiple -v options increase the verbosity (maximum: {len(LOG_LEVEL)})",
+    )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
 
     return parser.parse_args(args)
@@ -173,7 +178,11 @@ def main():
         if args.config:
             config_overwrites["config_file_path"] = Path(args.config)
 
-        config = Config(**config_overwrites)
+        config = Config()
+        config.update(config_overwrites)
+
+        levels: List[str] = list(LOG_LEVEL.keys())
+        config.logging.level = levels[min(args.verbose, len(levels) - 1)]
 
         if args.install:
             UniFiTools.install(config=config, assume_yes=args.yes)
@@ -183,7 +192,7 @@ def main():
             unifi_api = UniFiAPI(config=config)
             unifi_api.login()
 
-            unifi_devices = UniFiDevices(unifi_api=unifi_api)
+            unifi_devices: UniFiDevices = UniFiDevices(unifi_api=unifi_api)
             unifi_tools = UniFiTools(unifi_devices=unifi_devices)
 
             for sig in (signal.SIGINT, signal.SIGTERM):
@@ -199,6 +208,9 @@ def main():
                 else:
                     unifi_api.logout()
                     logger.info("Successfully shutdown the UniFi Tools service.")
+    except ConfigException as e:
+        logger.error(e)
+        sys.exit(1)
     except KeyboardInterrupt:
         pass
 

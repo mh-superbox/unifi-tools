@@ -37,7 +37,7 @@ class TestHappyPathUniFiDevices(TestUniFiApi):
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
     def test_device_info(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
-        unifi_devices = UniFiDevices(unifi_api=unifi_api)
+        unifi_devices: UniFiDevices = UniFiDevices(unifi_api=unifi_api)
         device_info: Optional[dict] = unifi_devices.get_device_info(device_id="MOCKED_ID")
 
         logs: list = [record.getMessage() for record in caplog.records]
@@ -51,7 +51,7 @@ class TestHappyPathUniFiDevices(TestUniFiApi):
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
     def test_scan(self, config_loader: ConfigLoader, unifi_api: UniFiAPI):
-        unifi_devices = UniFiDevices(unifi_api=unifi_api)
+        unifi_devices: UniFiDevices = UniFiDevices(unifi_api=unifi_api)
 
         assert 0 == len(unifi_devices.unifi_device_map)
         unifi_devices.scan()
@@ -69,7 +69,7 @@ class TestHappyPathUniFiDevices(TestUniFiApi):
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
     def test_read_devices(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
-        unifi_devices = UniFiDevices(unifi_api=unifi_api)
+        unifi_devices: UniFiDevices = UniFiDevices(unifi_api=unifi_api)
 
         assert 0 == len(unifi_devices.features)
         unifi_devices.read_devices()
@@ -104,7 +104,7 @@ class TestUnhappyPathUniFiDevices(TestUniFiApi):
         )
 
         responses.add(mock_response)
-        unifi_devices = UniFiDevices(unifi_api=unifi_api)
+        unifi_devices: UniFiDevices = UniFiDevices(unifi_api=unifi_api)
         device_info: dict = unifi_devices.get_device_info(device_id="MOCKED_ID")
 
         logs: list = [record.getMessage() for record in caplog.records]

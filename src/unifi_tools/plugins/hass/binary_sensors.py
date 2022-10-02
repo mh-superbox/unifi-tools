@@ -8,11 +8,11 @@ from typing import Set
 from typing import Tuple
 
 from unifi_tools.config import Config
-from unifi_tools.config import LOG_MQTT_PUBLISH
 from unifi_tools.config import logger
 from unifi_tools.features import FeatureConst
 from unifi_tools.features import FeatureMap
 from unifi_tools.features import FeaturePoEState
+from unifi_tools.logging import LOG_MQTT_PUBLISH
 from unifi_tools.plugins.hass.discover import HassBaseDiscovery
 from unifi_tools.unifi import UniFiDevices
 

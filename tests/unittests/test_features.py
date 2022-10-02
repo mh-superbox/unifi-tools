@@ -13,9 +13,9 @@ from unifi_tools.unifi import UniFiDevice
 from unifi_tools.unifi import UniFiDevices
 from unittests.test_unifi_api import TestUniFiApi
 from unittests.test_unifi_api_data import DEVICES_JSON_RESPONSE
+from unittests.test_unifi_api_data import RESPONSE_HEADER
 from unittests.test_unifi_api_data import UPDATED_PORT_OVERRIDES_PAYLOAD
 from unittests.test_unifi_api_data import UPDATED_PORT_OVERRIDES_WITH_CUSTOM_FEATURE_SETTINGS_PAYLOAD
-from unittests.test_unifi_api_data import RESPONSE_HEADER
 
 
 class TestHappyPathFeatures(TestUniFiApi):
@@ -68,7 +68,7 @@ class TestHappyPathFeatures(TestUniFiApi):
     def test_feature_port_properties(
         self, config_loader: ConfigLoader, unifi_api: UniFiAPI, port_idx: int, expected: dict
     ):
-        unifi_devices = UniFiDevices(unifi_api=unifi_api)
+        unifi_devices: UniFiDevices = UniFiDevices(unifi_api=unifi_api)
         unifi_devices.scan()
 
         device = unifi_devices.unifi_device_map["MOCKED_ID"]
@@ -118,7 +118,7 @@ class TestHappyPathFeatures(TestUniFiApi):
 
         responses.add(mock_response)
 
-        unifi_devices = UniFiDevices(unifi_api=unifi_api)
+        unifi_devices: UniFiDevices = UniFiDevices(unifi_api=unifi_api)
         unifi_devices.scan()
 
         device = unifi_devices.unifi_device_map["MOCKED_ID"]

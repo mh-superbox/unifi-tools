@@ -5,13 +5,13 @@ import pytest
 from pytest_asyncio.plugin import SubRequest
 
 from unifi_tools.config import Config
-from unifi_tools.config import LOGGER_NAME
+from unifi_tools.config import LOG_NAME
 
 
 @pytest.fixture(autouse=True, scope="session")
 def logger():
     logging.getLogger("asyncio").setLevel(logging.WARNING)
-    logging.getLogger(LOGGER_NAME).handlers.clear()
+    logging.getLogger(LOG_NAME).handlers.clear()
     logging.info("Initialize logging")
 
 
@@ -39,6 +39,6 @@ def config_loader(request: SubRequest, tmp_path: Path) -> ConfigLoader:
     c: ConfigLoader = ConfigLoader(temp=tmp_path)
     c.write_config(request.param)
 
-    logging.info("Create configuration: %s", c.get_config())
+    logging.info("Create configuration: %s", tmp_path)
 
     return c

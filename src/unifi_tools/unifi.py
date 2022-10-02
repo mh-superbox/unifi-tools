@@ -13,6 +13,7 @@ import requests
 from requests import Response
 
 from unifi_tools.config import Config
+from unifi_tools.config import LogPrefix
 from unifi_tools.config import logger
 from unifi_tools.features import FeatureConst
 from unifi_tools.features import FeatureMap
@@ -98,8 +99,8 @@ class UniFiAPI:
         self._login = response
 
         if result and result.meta.get("rc") == "ok" and response:
-            logger.info("[API] Successfully logged in.")
-            logger.debug("[API] CSRF Token: %s", response.cookies.get("csrf_token"))
+            logger.info("%s Successfully logged in.", LogPrefix.API)
+            logger.debug("%s CSRF Token: %s", LogPrefix.API, response.cookies.get("csrf_token"))
             self._logged_in = True
 
         return result, response
@@ -118,7 +119,7 @@ class UniFiAPI:
             },
         )
 
-        logger.info("[API] Successfully logged out.")
+        logger.info("%s Successfully logged out.", LogPrefix.API)
         self._logged_in = False
 
         return result, response
@@ -132,7 +133,7 @@ class UniFiAPI:
         )
 
         if result and result.data and log is True:
-            logger.debug("[API] [list_all_devices] %s", result.data)
+            logger.debug("%s [list_all_devices] %s", LogPrefix.API, result.data)
 
         return result, response
 
@@ -146,7 +147,7 @@ class UniFiAPI:
             json=port_overrides,
         )
 
-        logger.debug("[API] [update_device] %s", device_id)
+        logger.debug("%s [update_device] %s", LogPrefix.API, device_id)
 
         return result, response
 
@@ -167,10 +168,10 @@ class UniFiAPI:
 
             response.raise_for_status()
         except requests.ConnectionError as e:
-            logger.debug("[API] %s", e)
+            logger.debug("%s %s", LogPrefix.API, e)
             self._exit(1)
         except requests.HTTPError as e:
-            logger.error("[API] %s", e)
+            logger.error("%s %s", LogPrefix.API, e)
             self._exit(1)
         finally:
             if response:
@@ -180,7 +181,7 @@ class UniFiAPI:
                     meta_info: str = f"""[{result.meta.get('rc')}]{f" {result.meta['msg']}" if result.meta.get('msg') else ""} {response.url}"""
 
                     if log is True:
-                        logger.debug("[API] %s", meta_info)
+                        logger.debug("%s %s", LogPrefix.API, meta_info)
 
         return result, response
 
@@ -191,7 +192,7 @@ class UniFiAPI:
             data = json.loads(response.text)
             result = UniFiAPIResult(meta=data.get("meta", {}), data=data.get("data", []))
         except JSONDecodeError:
-            logger.error("[API] JSON decode error. API not available! Shutdown UniFi Tools.")
+            logger.error("%s JSON decode error. API not available! Shutdown UniFi Tools.", LogPrefix.API)
             self._exit(1)
 
         return result
@@ -252,11 +253,11 @@ class UniFiDevices:
             self.unifi_device_map.initialise(result.data)
 
     def read_devices(self):
-        logger.info("[API] Reading adopted devices.")
+        logger.info("%s Reading adopted devices.", LogPrefix.API)
         self.scan()
 
         if self.unifi_device_map is None:
-            logger.debug("[API] Can't read adopted devices!")
+            logger.debug("%s Can't read adopted devices!", LogPrefix.API)
         else:
             for device_id, device_info in self.unifi_device_map.items():
                 if device_info["ports"]:

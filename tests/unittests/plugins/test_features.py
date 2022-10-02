@@ -73,24 +73,24 @@ class TestHappyPathFeaturesMqttPlugin(TestUniFiApi):
             responses.add(mock_list_all_devices_response_2)
             responses.add(mock_update_device_response)
 
-            unifi_devices = UniFiDevices(unifi_api=unifi_api)
+            unifi_devices: UniFiDevices = UniFiDevices(unifi_api=unifi_api)
             unifi_devices.read_devices()
 
-            mock_mqtt_messages = AsyncMock()
+            mock_mqtt_messages: AsyncMock = AsyncMock()
             mock_mqtt_messages.__aenter__.return_value = MockMQTTMessages([b"""{"poe_mode": "on"}"""])
 
-            mock_mqtt_client = AsyncMock(spec=Client)
+            mock_mqtt_client: AsyncMock = AsyncMock(spec=Client)
             mock_mqtt_client.filtered_messages.return_value = mock_mqtt_messages
 
             FeaturesMqttPlugin.PUBLISH_RUNNING = PropertyMock(side_effect=[True, False])
-            features = FeaturesMqttPlugin(unifi_devices=unifi_devices, mqtt_client=mock_mqtt_client)
+            plugin = FeaturesMqttPlugin(unifi_devices=unifi_devices, mqtt_client=mock_mqtt_client)
 
             async with AsyncExitStack() as stack:
                 tasks: Set[Task] = set()
 
                 await stack.enter_async_context(mock_mqtt_client)
 
-                features_tasks = await features.init_tasks(stack)
+                features_tasks = await plugin.init_tasks(stack)
                 tasks.update(features_tasks)
 
                 await asyncio.gather(*tasks)

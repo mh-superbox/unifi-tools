@@ -37,10 +37,11 @@ $ unifi-tools --install
 
 ## Arguments
 
-| Argument    | Description                      |
-|-------------|----------------------------------|
-| `--install` | install unifi tools              |
-| `--yes`     | automatic yes to install prompts |
+| Argument    | Description                                                           |
+|-------------|-----------------------------------------------------------------------|
+| `--install` | install unifi tools                                                   |
+| `--yes`     | automatic yes to install prompts                                      |
+| `-v`        | verbose mode: multiple -v options increase the verbosity (maximum: 4) |
 
 ## Configuration
 

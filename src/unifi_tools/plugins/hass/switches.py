@@ -1,7 +1,6 @@
 import asyncio
 import json
 from asyncio import Task
-from dataclasses import asdict
 from typing import Any
 from typing import List
 from typing import Set
@@ -34,8 +33,8 @@ class HassSwitchesDiscovery(HassBaseDiscovery):
 
         message = {
             "name": f"{feature.friendly_name}",
-            "unique_id": f"{self.config.device_name.lower()}-{feature.unique_id}",
-            "object_id": f"{self.config.device_name.lower()}-{feature.unique_id}",
+            "unique_id": f"{self.config.device_info.name.lower()}-{feature.unique_id}",
+            "object_id": f"{self.config.device_info.name.lower()}-{feature.unique_id}",
             "command_topic": f"{feature.topic}/set",
             "state_topic": f"{feature.topic}/get",
             "value_template": "{% if value_json.poe_mode in [" + poe_on_states + "] %}on{% else %}off{% endif %}",
@@ -49,7 +48,7 @@ class HassSwitchesDiscovery(HassBaseDiscovery):
                 "identifiers": feature.unifi_device.id,
                 "model": feature.unifi_device.info["model"],
                 "sw_version": feature.unifi_device.info["version"],
-                **asdict(self.config.homeassistant.device),
+                "manufacturer": self.config.device_info.manufacturer,
             },
         }
 

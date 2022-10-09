@@ -56,7 +56,8 @@ You can set the settings in the `/etc/unifi/settings.yaml`.
 
 ```yaml
 # settings.yaml
-device_name: UniFi
+device_info:
+  mame: UniFi
 ```
 
 ### MQTT

@@ -1,6 +1,5 @@
 import asyncio
 import json
-import sys
 from json import JSONDecodeError
 from typing import Dict
 from typing import Final
@@ -10,16 +9,17 @@ from typing import Optional
 from typing import Tuple
 
 import requests
+import sys
 from requests import Response
 
+from superbox_utils.asyncio import cancel_tasks
+from superbox_utils.dict.data_dict import DataDict
 from unifi_tools.config import Config
 from unifi_tools.config import LogPrefix
 from unifi_tools.config import logger
 from unifi_tools.features import FeatureConst
 from unifi_tools.features import FeatureMap
 from unifi_tools.features import FeaturePort
-from unifi_tools.helpers import DataStorage
-from unifi_tools.helpers import cancel_tasks
 
 
 class UniFiPort(NamedTuple):
@@ -28,7 +28,7 @@ class UniFiPort(NamedTuple):
     poe_mode: Optional[str]
 
 
-class UniFiDeviceMap(DataStorage):
+class UniFiDeviceMap(DataDict):
     def initialise(self, device_infos: List[dict]):
         for device_info in device_infos:
             if device_info.get("adopted") is True:

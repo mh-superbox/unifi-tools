@@ -1,4 +1,5 @@
-device_name: UniFi
+device_info:
+  name: UniFi
 mqtt:
   host: localhost
   port: 1883

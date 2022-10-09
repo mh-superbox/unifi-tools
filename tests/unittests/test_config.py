@@ -14,19 +14,19 @@ class TestUnhappyPathConfig:
         [
             (
                 CONFIG_INVALID_DEVICE_NAME,
-                "[CONFIG] Invalid value 'invalid device name' in 'device_name'. The following characters are prohibited: a-z 0-9 -_",
+                "Invalid value 'Invalid Device Name' in 'name'. The following characters are prohibited: a-z 0-9 -_",
             ),
             (
                 CONFIG_INVALID_HOMEASSISTANT_DISCOVERY_PREFIX,
-                "[CONFIG] [HOMEASSISTANT] Invalid value 'invalid discovery name' in 'discovery_prefix'. The following characters are prohibited: a-z 0-9 -_",
+                "[HOMEASSISTANT] Invalid value 'invalid discovery name' in 'discovery_prefix'. The following characters are prohibited: a-z 0-9 -_",
             ),
             (
                 CONFIG_INVALID_TYPE,
-                "[CONFIG] Expected features to be <class 'dict'>, got 'INVALID'",
+                "Expected features to be <class 'dict'>, got 'INVALID'",
             ),
             (
                 CONFIG_INVALID_LOG_LEVEL,
-                "[CONFIG] Invalid log level 'invalid'. The following log levels are allowed: debug info warning error.",
+                "Invalid log level 'invalid'. The following log levels are allowed: error warning info debug.",
             ),
         ],
         indirect=["config_loader"],

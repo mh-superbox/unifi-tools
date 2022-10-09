@@ -1,45 +1,36 @@
-config_invalid_device_name: str = """device_name: Invalid Device Name
-mqtt:
-  host: localhost
-  port: 1883
-  connection:
-    keepalive: 15
-    retry_limit: 30
-    reconnect_interval: 10
-homeassistant:
-  enabled: true
-  discovery_prefix: homeassistant
-unifi_controller:
-  url: localhost
-  port: 8443
-  username: username
-  password: password
-features:
-  MOCKED_ID:
-    ports:
-      - port_idx: 3
-        poe_mode: pasv24
+from typing import Final
+
+CONFIG_INVALID_DEVICE_NAME: Final[
+    str
+] = """device_info:
+  name: Invalid Device Name
 logging:
   level: debug
 """
 
-config_invalid_type: str = """device_name: MOCKED_DEVICE
-mqtt:
-  host: localhost
-  port: 1883
-  connection:
-    keepalive: 15
-    retry_limit: 30
-    reconnect_interval: 10
+CONFIG_INVALID_HOMEASSISTANT_DISCOVERY_PREFIX: Final[
+    str
+] = """device_info:
+  name: MOCKED_UNIFI
 homeassistant:
   enabled: true
-  discovery_prefix: homeassistant
-unifi_controller:
-  url: localhost
-  port: 8443
-  username: username
-  password: password
+  discovery_prefix: INVALID DISCOVERY NAME
+logging:
+  level: debug
+"""
+
+CONFIG_INVALID_TYPE: Final[
+    str
+] = """device_info:
+  name: MOCKED_DEVICE
 features: INVALID
 logging:
   level: debug
 """
+
+CONFIG_INVALID_LOG_LEVEL: Final[
+    str
+] = """device_info:
+  name: MOCKED_UNIPI
+logging:
+  level: invalid"""

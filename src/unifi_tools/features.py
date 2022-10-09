@@ -1,4 +1,3 @@
-import itertools
 import json
 from abc import ABC
 from abc import abstractmethod
@@ -6,8 +5,10 @@ from collections.abc import Iterator
 from typing import Final
 from typing import List
 
+import itertools
+
+from superbox_utils.dict.data_dict import DataDict
 from unifi_tools.config import Config
-from unifi_tools.helpers import DataStorage
 
 
 class FeaturePoEState:
@@ -141,7 +142,7 @@ class FeaturePort(Feature):
 
     @property
     def topic(self) -> str:
-        return f"{self.config.device_name.lower()}/{self.unique_id}"
+        return f"{self.config.device_info.name.lower()}/{self.unique_id}"
 
     @property
     def json_attributes(self) -> str:
@@ -199,7 +200,7 @@ class FeaturePort(Feature):
         return update_devices
 
 
-class FeatureMap(DataStorage):
+class FeatureMap(DataDict):
     def register(self, feature: Feature):
         if not self.get(feature.feature_name):
             self[feature.feature_name] = []

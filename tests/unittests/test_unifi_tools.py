@@ -1,8 +1,8 @@
-import builtins
 import subprocess
 from argparse import Namespace
 from typing import List
 
+import builtins
 import pytest as pytest
 from _pytest.capture import CaptureFixture
 from _pytest.logging import LogCaptureFixture
@@ -18,9 +18,8 @@ from unittests.test_unifi_tools_data import UNIFI_TOOLS_INSTALLER_WITH_ENABLE_SY
 
 class TestHappyPathUniFiTools:
     def test_parse_args(self):
-        parser = parse_args(["-c", "/tmp/settings.yml", "-i", "-y"])
+        parser = parse_args(["-i", "-y"])
 
-        assert "/tmp/settings.yml" == parser.config
         assert True is parser.install
         assert True is parser.yes
         assert isinstance(parser, Namespace)
@@ -59,8 +58,6 @@ class TestHappyPathUniFiTools:
             assert "MOCKED STATUS" in logs
 
         try:
-            assert expected % config_loader.temp_config_path == capsys.readouterr().out
+            assert expected % config_loader.temp == capsys.readouterr().out
         except TypeError:
             assert expected == capsys.readouterr().out
-
-        config_loader.cleanup()

@@ -1,49 +1,38 @@
-import shutil
-import tempfile
-from pathlib import Path
-
 import pytest
-from _pytest.logging import LogCaptureFixture
 
-from unifi_tools.config import Config
-from unittests.test_config_data import config_invalid_device_name
-from unittests.test_config_data import config_invalid_type
+from conftest import ConfigLoader
+from unifi_tools.config import ConfigException
+from unittests.test_config_data import CONFIG_INVALID_DEVICE_NAME
+from unittests.test_config_data import CONFIG_INVALID_HOMEASSISTANT_DISCOVERY_PREFIX
+from unittests.test_config_data import CONFIG_INVALID_LOG_LEVEL
+from unittests.test_config_data import CONFIG_INVALID_TYPE
 
 
 class TestUnhappyPathConfig:
-    def test_invalid_device_name(self, caplog: LogCaptureFixture):
-        temp_config_path: Path = Path(tempfile.mkdtemp())
-        temp_config_file_path: Path = temp_config_path / "settings.yml"
+    @pytest.mark.parametrize(
+        "config_loader, expected_log",
+        [
+            (
+                CONFIG_INVALID_DEVICE_NAME,
+                "Invalid value 'Invalid Device Name' in 'name'. The following characters are prohibited: a-z 0-9 -_",
+            ),
+            (
+                CONFIG_INVALID_HOMEASSISTANT_DISCOVERY_PREFIX,
+                "[HOMEASSISTANT] Invalid value 'invalid discovery name' in 'discovery_prefix'. The following characters are prohibited: a-z 0-9 -_",
+            ),
+            (
+                CONFIG_INVALID_TYPE,
+                "Expected features to be <class 'dict'>, got 'INVALID'",
+            ),
+            (
+                CONFIG_INVALID_LOG_LEVEL,
+                "Invalid log level 'invalid'. The following log levels are allowed: error warning info debug.",
+            ),
+        ],
+        indirect=["config_loader"],
+    )
+    def test_validation(self, config_loader: ConfigLoader, expected_log: str):
+        with pytest.raises(ConfigException) as error:
+            config_loader.get_config()
 
-        with open(temp_config_file_path, "w") as f:
-            f.write(config_invalid_device_name)
-
-        with pytest.raises(SystemExit) as error:
-            Config(config_file_path=temp_config_file_path)
-            assert 1 == error.value
-
-        shutil.rmtree(temp_config_path)
-
-        logs: list = [record.getMessage() for record in caplog.records]
-
-        assert (
-            "[CONFIG] Invalid value 'Invalid Device Name' in 'device_name'. The following characters are prohibited: A-Z a-z 0-9 -_"
-            in logs
-        )
-
-    def test_invalid_type(self, caplog: LogCaptureFixture):
-        temp_config_path: Path = Path(tempfile.mkdtemp())
-        temp_config_file_path: Path = temp_config_path / "settings.yml"
-
-        with open(temp_config_file_path, "w") as f:
-            f.write(config_invalid_type)
-
-        with pytest.raises(SystemExit) as error:
-            Config(config_file_path=temp_config_file_path)
-            assert 1 == error.value
-
-        shutil.rmtree(temp_config_path)
-
-        logs: list = [record.getMessage() for record in caplog.records]
-
-        assert "[CONFIG] Config - Expected features to be <class 'dict'>, got 'INVALID'" in logs
+        assert expected_log == str(error.value)

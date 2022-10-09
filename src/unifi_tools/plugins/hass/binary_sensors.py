@@ -1,18 +1,17 @@
 import asyncio
 import json
 from asyncio import Task
-from dataclasses import asdict
 from typing import Any
 from typing import List
 from typing import Set
 from typing import Tuple
 
 from unifi_tools.config import Config
-from unifi_tools.config import LOG_MQTT_PUBLISH
 from unifi_tools.config import logger
 from unifi_tools.features import FeatureConst
 from unifi_tools.features import FeatureMap
 from unifi_tools.features import FeaturePoEState
+from unifi_tools.logging import LOG_MQTT_PUBLISH
 from unifi_tools.plugins.hass.discover import HassBaseDiscovery
 from unifi_tools.unifi import UniFiDevices
 
@@ -34,8 +33,8 @@ class HassBinarySensorsDiscovery(HassBaseDiscovery):
 
         message: dict = {
             "name": f"{feature.friendly_name}",
-            "unique_id": f"{self.config.device_name.lower()}-{feature.unique_id}",
-            "object_id": f"{self.config.device_name.lower()}-{feature.unique_id}",
+            "unique_id": f"{self.config.device_info.name.lower()}-{feature.unique_id}",
+            "object_id": f"{self.config.device_info.name.lower()}-{feature.unique_id}",
             "json_attributes_topic": f"{feature.topic}/get",
             "state_topic": f"{feature.topic}/get",
             "value_template": "{% if value_json.poe_mode in [" + poe_on_states + "] %}on{% else %}off{% endif %}",
@@ -47,7 +46,7 @@ class HassBinarySensorsDiscovery(HassBaseDiscovery):
                 "identifiers": feature.unifi_device.id,
                 "model": feature.unifi_device.info["model"],
                 "sw_version": feature.unifi_device.info["version"],
-                **asdict(self.config.homeassistant.device),
+                "manufacturer": self.config.device_info.manufacturer,
             },
         }
 

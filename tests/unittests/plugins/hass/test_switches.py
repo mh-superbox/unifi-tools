@@ -2,7 +2,6 @@ import asyncio
 import json
 from asyncio import Task
 from contextlib import AsyncExitStack
-from typing import NamedTuple
 from typing import Set
 from unittest.mock import AsyncMock
 
@@ -13,53 +12,38 @@ from asyncio_mqtt import Client
 from responses import matchers
 from responses.registries import OrderedRegistry
 
+from conftest import ConfigLoader
 from conftest_data import CONFIG_CONTENT
+from unifi_tools.features import Feature
 from unifi_tools.plugins.hass.switches import HassSwitchesDiscovery
 from unifi_tools.plugins.hass.switches import HassSwitchesMqttPlugin
 from unifi_tools.unifi import UniFiAPI
 from unifi_tools.unifi import UniFiDevices
 from unittests.plugins.test_features_data import devices_json_response_2
 from unittests.test_unifi_api import TestUniFiApi
-from unittests.test_unifi_api_data import response_header
-
-
-class MockMQTTMessage(NamedTuple):
-    payload: bytes
-
-
-class MockMQTTMessages:
-    def __init__(self, message):
-        self.message = message
-
-    def __aiter__(self):
-        return self
-
-    async def __anext__(self):
-        if self.message:
-            return MockMQTTMessage(self.message.pop())
-
-        raise StopAsyncIteration
+from unittests.test_unifi_api_data import RESPONSE_HEADER
 
 
 class TestHappyPathHassSwitchesMqttPlugin(TestUniFiApi):
     @responses.activate(registry=OrderedRegistry)
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_init_tasks(self, config_loader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_init_tasks(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         async def run():
             mock_list_all_devices_response_1 = responses.get(
                 url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
                 json=json.loads(devices_json_response_2),
-                match=[matchers.header_matcher(response_header)],
+                match=[matchers.header_matcher(RESPONSE_HEADER)],
             )
 
             responses.add(mock_list_all_devices_response_1)
 
-            unifi_devices = UniFiDevices(unifi_api=unifi_api)
+            unifi_devices: UniFiDevices = UniFiDevices(unifi_api=unifi_api)
             unifi_devices.read_devices()
 
-            mock_mqtt_client = AsyncMock(spec=Client)
-
-            plugin = HassSwitchesMqttPlugin(unifi_devices=unifi_devices, mqtt_client=mock_mqtt_client)
+            mock_mqtt_client: AsyncMock = AsyncMock(spec=Client)
+            plugin: HassSwitchesMqttPlugin = HassSwitchesMqttPlugin(
+                unifi_devices=unifi_devices, mqtt_client=mock_mqtt_client
+            )
 
             async with AsyncExitStack() as stack:
                 tasks: Set[Task] = set()
@@ -96,23 +80,24 @@ class TestHappyPathHassSwitchesMqttPlugin(TestUniFiApi):
 
     @responses.activate(registry=OrderedRegistry)
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_discovery_message(self, config_loader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_discovery_message(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_list_all_devices_response_1 = responses.get(
             url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
             json=json.loads(devices_json_response_2),
-            match=[matchers.header_matcher(response_header)],
+            match=[matchers.header_matcher(RESPONSE_HEADER)],
         )
 
         responses.add(mock_list_all_devices_response_1)
 
-        unifi_devices = UniFiDevices(unifi_api=unifi_api)
+        unifi_devices: UniFiDevices = UniFiDevices(unifi_api=unifi_api)
         unifi_devices.read_devices()
 
-        mock_mqtt_client = AsyncMock(spec=Client)
+        mock_mqtt_client: AsyncMock = AsyncMock(spec=Client)
+        plugin: HassSwitchesMqttPlugin = HassSwitchesMqttPlugin(
+            unifi_devices=unifi_devices, mqtt_client=mock_mqtt_client
+        )
 
-        plugin = HassSwitchesMqttPlugin(unifi_devices=unifi_devices, mqtt_client=mock_mqtt_client)
-
-        feature = next(plugin._hass.features.by_feature_type(HassSwitchesDiscovery.publish_feature_types))
+        feature: Feature = next(plugin._hass.features.by_feature_type(HassSwitchesDiscovery.publish_feature_types))
         topic, message = plugin._hass._get_discovery(feature)
 
         assert "MOCKED Port 1" == message["name"]

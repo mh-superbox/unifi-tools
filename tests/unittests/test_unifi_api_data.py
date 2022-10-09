@@ -1,4 +1,8 @@
-devices_json_response: str = """{
+from typing import Final
+
+DEVICES_JSON_RESPONSE: Final[
+    str
+] = """{
     "meta": {
         "rc": "ok"
     },
@@ -565,7 +569,9 @@ devices_json_response: str = """{
     ]
 }"""
 
-devices_not_adopted_json_response: str = """{
+DEVICES_NOT_ADOPTED_JSON_RESPONSE: Final[
+    str
+] = """{
     "meta": {
         "rc": "ok"
     },
@@ -1132,7 +1138,9 @@ devices_not_adopted_json_response: str = """{
     ]
 }"""
 
-port_overrides_payload: str = """{
+PORT_OVERRIDES_PAYLOAD: Final[
+    str
+] = """{
     "port_overrides": [
         {
             "name": "MOCKED Port 1",
@@ -1377,7 +1385,9 @@ port_overrides_payload: str = """{
     ]
 }"""
 
-updated_port_overrides_payload: str = """{
+UPDATED_PORT_OVERRIDES_PAYLOAD: Final[
+    str
+] = """{
     "port_overrides": [
         {
             "name": "MOCKED Port 1",
@@ -1622,7 +1632,9 @@ updated_port_overrides_payload: str = """{
     ]
 }"""
 
-updated_port_overrides_with_custom_feature_settings_payload: str = """{
+UPDATED_PORT_OVERRIDES_WITH_CUSTOM_FEATURE_SETTINGS_PAYLOAD: Final[
+    str
+] = """{
     "port_overrides": [
         {
             "name": "MOCKED Port 1",
@@ -1867,7 +1879,7 @@ updated_port_overrides_with_custom_feature_settings_payload: str = """{
     ]
 }"""
 
-response_header: dict = {
+RESPONSE_HEADER: Final[dict] = {
     "Accept": "application/json",
     "Content-Type": "application/json; charset=utf-8",
 }

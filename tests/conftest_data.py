@@ -2,7 +2,8 @@ from typing import Final
 
 CONFIG_CONTENT: Final[
     str
-] = """device_name: MOCKED_UNIFI
+] = """device_info:
+  name: MOCKED_UNIFI
 mqtt:
   host: localhost
   port: 1883

@@ -4,12 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-asyncio-mqtt = "~=0.12.1"
-pyyaml = "~=6.0"
-paho-mqtt = "~=1.6.1"
 requests = "~=2.28.1"
-config = "*"
-pytest = "*"
+superbox-utils = "~=0.3.0"
 
 [dev-packages]
 mypy = "*"
@@ -17,14 +13,13 @@ black = "*"
 pre-commit = "*"
 flake8 = "*"
 flake8-docstrings = "*"
-pytest = "*"
 pytest-cov = "*"
-types-pyyaml = "*"
 types-requests = "*"
 pytest-mock = "*"
 responses = "*"
 pytest-asyncio = "*"
 coverage-badge = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.8"

@@ -105,7 +105,7 @@ class FeaturePort(Feature):
 
     @property
     def real_poe_mode(self) -> str:
-        device_info = self.unifi_devices.unifi_device_map.get(self.device_id)
+        device_info = self.unifi_devices.unifi_device_map.get(self.unifi_device.id)
         port = device_info["ports"][self.port_info.idx]
 
         return port.poe_mode
@@ -141,15 +141,29 @@ class FeaturePort(Feature):
 
     @property
     def device_id(self) -> str:
-        return self.unifi_device.id
+        _device_id: str = self.unifi_device.id
+        features_config: Optional[FeatureConfig] = self.config.features.get(self.unifi_device.id)
+
+        if features_config:
+            _device_id = features_config.id
+
+        return _device_id.lower()
 
     @property
     def unique_id(self) -> str:
-        return f"{self.device_id}-{self.feature_name.lower()}-{self.port_info.idx}"
+        return f"{self.config.device_info.name.lower()}-{self.unifi_device.id.lower()}-{self.feature_name.lower()}-{self.port_info.idx}"
+
+    @property
+    def object_id(self) -> str:
+        return (
+            f"{self.config.device_info.name.lower()}-{self.device_id}-{self.feature_name.lower()}-{self.port_info.idx}"
+        )
 
     @property
     def topic(self) -> str:
-        return f"{self.config.device_info.name.lower()}/{self.unique_id}"
+        return (
+            f"{self.config.device_info.name.lower()}/{self.device_id}-{self.feature_name.lower()}-{self.port_info.idx}"
+        )
 
     @property
     def json_attributes(self) -> str:
@@ -163,7 +177,7 @@ class FeaturePort(Feature):
     def _get_real_poe_mode(self, poe_mode: str) -> str:
         # When state is "on" then check settings if PoE for this port is "auto" or "pasv24".
         if poe_mode == FeaturePoEState.ON:
-            features_config: Optional[FeatureConfig] = self.config.features.get(self.device_id)
+            features_config: Optional[FeatureConfig] = self.config.features.get(self.unifi_device.id)
             poe_mode = FeaturePoEState.POE
 
             if features_config:
@@ -192,7 +206,7 @@ class FeaturePort(Feature):
         update_devices: bool = False
 
         if FeatureConst.POE_MODE in value.keys():
-            device_info = self.unifi_devices.get_device_info(device_id=self.device_id)
+            device_info = self.unifi_devices.get_device_info(device_id=self.unifi_device.id)
             port_overrides: list = device_info.get("port_overrides", [])
 
             for port in port_overrides:
@@ -202,7 +216,7 @@ class FeaturePort(Feature):
 
             if update_devices:
                 self.unifi_api.update_device(
-                    device_id=self.device_id, port_overrides={"port_overrides": port_overrides}
+                    device_id=self.unifi_device.id, port_overrides={"port_overrides": port_overrides}
                 )
 
         return update_devices

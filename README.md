@@ -120,6 +120,11 @@ unifi_controller:
 In features section you can define the PoE mode for a port from a UniFi switch.
 The UniFi switch is defined with its unique ID.
 
+| Key      | Value                                   |
+|----------|-----------------------------------------|
+| `id`     | Used for `Entity ID` in Home Assistant. |
+| `ports`  | Define ports from a UniFi switch.       |
+
 | Key        | Value                        |
 |------------|------------------------------|
 | `port_idx` | Port number                  |
@@ -129,6 +134,7 @@ The UniFi switch is defined with its unique ID.
 # settings.yaml
 features:
   6070cd81a61f7408a770607c:
+    id: switch
     ports:
       - port_idx: 1
         poe_mode: pasv24

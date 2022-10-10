@@ -20,7 +20,8 @@ unifi_controller:
   username: username
   password: password
 features:
-  MOCKED_ID:
+  MOCKED_DEVICE_ID:
+    id: MOCKED_ID
     ports:
       - port_idx: 3
         poe_mode: pasv24

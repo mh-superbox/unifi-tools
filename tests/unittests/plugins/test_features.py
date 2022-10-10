@@ -61,7 +61,7 @@ class TestHappyPathFeaturesMqttPlugin(TestUniFiApi):
             )
 
             mock_update_device_response = responses.put(
-                url=f"{unifi_api.controller_url}{UniFiAPI.REST_DEVICE_ENDPOINT}/MOCKED_ID",
+                url=f"{unifi_api.controller_url}{UniFiAPI.REST_DEVICE_ENDPOINT}/MOCKED_DEVICE_ID",
                 json=json.loads(devices_json_response_2),
                 match=[
                     matchers.header_matcher(RESPONSE_HEADER),
@@ -102,18 +102,18 @@ class TestHappyPathFeaturesMqttPlugin(TestUniFiApi):
 
             assert "[API] Reading adopted devices." in logs
 
-            assert "[MQTT] Subscribe topic mocked_unifi/MOCKED_ID-port-1/set" in logs
-            assert "[MQTT] Subscribe topic mocked_unifi/MOCKED_ID-port-2/set" in logs
-            assert "[MQTT] Subscribe topic mocked_unifi/MOCKED_ID-port-3/set" in logs
+            assert "[MQTT] Subscribe topic mocked_unifi/MOCKED_DEVICE_ID-port-1/set" in logs
+            assert "[MQTT] Subscribe topic mocked_unifi/MOCKED_DEVICE_ID-port-2/set" in logs
+            assert "[MQTT] Subscribe topic mocked_unifi/MOCKED_DEVICE_ID-port-3/set" in logs
 
             assert "[API] [ok] https://unifi.local/api/s/default/stat/device" in logs
-            assert "[API] [ok] https://unifi.local/api/s/default/rest/device/MOCKED_ID" in logs
-            assert "[API] [update_device] MOCKED_ID" in logs
+            assert "[API] [ok] https://unifi.local/api/s/default/rest/device/MOCKED_DEVICE_ID" in logs
+            assert "[API] [update_device] MOCKED_DEVICE_ID" in logs
 
-            assert '[MQTT] [mocked_unifi/MOCKED_ID-port-1/set] Subscribe message: {"poe_mode": "on"}' in logs
-            assert '[MQTT] [mocked_unifi/MOCKED_ID-port-1/get] Publishing message: {"poe_mode": "auto"}' in logs
-            assert '[MQTT] [mocked_unifi/MOCKED_ID-port-2/get] Publishing message: {"poe_mode": "off"}' in logs
-            assert '[MQTT] [mocked_unifi/MOCKED_ID-port-3/get] Publishing message: {"poe_mode": "off"}' in logs
+            assert '[MQTT] [mocked_unifi/MOCKED_DEVICE_ID-port-1/set] Subscribe message: {"poe_mode": "on"}' in logs
+            assert '[MQTT] [mocked_unifi/MOCKED_DEVICE_ID-port-1/get] Publishing message: {"poe_mode": "auto"}' in logs
+            assert '[MQTT] [mocked_unifi/MOCKED_DEVICE_ID-port-2/get] Publishing message: {"poe_mode": "off"}' in logs
+            assert '[MQTT] [mocked_unifi/MOCKED_DEVICE_ID-port-3/get] Publishing message: {"poe_mode": "off"}' in logs
 
             assert 12 == len(logs)
 

@@ -139,7 +139,7 @@ class TestHappyPathUniFiApi(TestUniFiApi):
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
     def test_update_device(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.put(
-            url=f"{unifi_api.controller_url}{UniFiAPI.REST_DEVICE_ENDPOINT}/MOCKED_ID",
+            url=f"{unifi_api.controller_url}{UniFiAPI.REST_DEVICE_ENDPOINT}/MOCKED_DEVICE_ID",
             json=json.loads(DEVICES_JSON_RESPONSE),
             match=[
                 matchers.header_matcher(RESPONSE_HEADER),
@@ -149,13 +149,13 @@ class TestHappyPathUniFiApi(TestUniFiApi):
 
         responses.add(mock_response)
         result, response = unifi_api.update_device(
-            device_id="MOCKED_ID", port_overrides=json.loads(PORT_OVERRIDES_PAYLOAD)
+            device_id="MOCKED_DEVICE_ID", port_overrides=json.loads(PORT_OVERRIDES_PAYLOAD)
         )
 
         logs: list = [record.getMessage() for record in caplog.records]
 
-        assert "[API] [ok] https://unifi.local/api/s/default/rest/device/MOCKED_ID" in logs
-        assert "[API] [update_device] MOCKED_ID" in logs
+        assert "[API] [ok] https://unifi.local/api/s/default/rest/device/MOCKED_DEVICE_ID" in logs
+        assert "[API] [update_device] MOCKED_DEVICE_ID" in logs
         assert 2 == len(logs)
 
         assert isinstance(result, UniFiAPIResult)

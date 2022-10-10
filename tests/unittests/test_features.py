@@ -41,8 +41,9 @@ class TestHappyPathFeatures(TestUniFiApi):
                     "value": {"poe_mode": "on"},
                     "feature_name": "port",
                     "friendly_name": "MOCKED Port 1",
-                    "unique_id": "MOCKED_DEVICE_ID-port-1",
-                    "topic": "mocked_unifi/MOCKED_DEVICE_ID-port-1",
+                    "unique_id": "mocked_unifi-mocked_device_id-port-1",
+                    "object_id": "mocked_unifi-mocked_id-port-1",
+                    "topic": "mocked_unifi/mocked_id-port-1",
                     "state": '{"poe_mode": "on"}',
                     "json_attributes": '{"poe_mode": "pasv24"}',
                     "changed": True,
@@ -55,8 +56,9 @@ class TestHappyPathFeatures(TestUniFiApi):
                     "value": {},
                     "feature_name": "port",
                     "friendly_name": "Port #26",
-                    "unique_id": "MOCKED_DEVICE_ID-port-26",
-                    "topic": "mocked_unifi/MOCKED_DEVICE_ID-port-26",
+                    "unique_id": "mocked_unifi-mocked_device_id-port-26",
+                    "object_id": "mocked_unifi-mocked_id-port-26",
+                    "topic": "mocked_unifi/mocked_id-port-26",
                     "state": "{}",
                     "json_attributes": "{}",
                     "changed": False,
@@ -84,6 +86,7 @@ class TestHappyPathFeatures(TestUniFiApi):
         assert expected["feature_name"] == feature.feature_name
         assert expected["friendly_name"] == feature.friendly_name
         assert expected["unique_id"] == feature.unique_id
+        assert expected["object_id"] == feature.object_id
         assert expected["topic"] == feature.topic
         assert expected["json_attributes"] == feature.json_attributes
         assert expected["changed"] is feature.changed

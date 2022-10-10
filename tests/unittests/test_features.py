@@ -41,8 +41,8 @@ class TestHappyPathFeatures(TestUniFiApi):
                     "value": {"poe_mode": "on"},
                     "feature_name": "port",
                     "friendly_name": "MOCKED Port 1",
-                    "unique_id": "MOCKED_ID-port-1",
-                    "topic": "mocked_unifi/MOCKED_ID-port-1",
+                    "unique_id": "MOCKED_DEVICE_ID-port-1",
+                    "topic": "mocked_unifi/MOCKED_DEVICE_ID-port-1",
                     "state": '{"poe_mode": "on"}',
                     "json_attributes": '{"poe_mode": "pasv24"}',
                     "changed": True,
@@ -55,8 +55,8 @@ class TestHappyPathFeatures(TestUniFiApi):
                     "value": {},
                     "feature_name": "port",
                     "friendly_name": "Port #26",
-                    "unique_id": "MOCKED_ID-port-26",
-                    "topic": "mocked_unifi/MOCKED_ID-port-26",
+                    "unique_id": "MOCKED_DEVICE_ID-port-26",
+                    "topic": "mocked_unifi/MOCKED_DEVICE_ID-port-26",
                     "state": "{}",
                     "json_attributes": "{}",
                     "changed": False,
@@ -71,11 +71,11 @@ class TestHappyPathFeatures(TestUniFiApi):
         unifi_devices: UniFiDevices = UniFiDevices(unifi_api=unifi_api)
         unifi_devices.scan()
 
-        device = unifi_devices.unifi_device_map["MOCKED_ID"]
+        device = unifi_devices.unifi_device_map["MOCKED_DEVICE_ID"]
 
         feature = FeaturePort(
             unifi_devices=unifi_devices,
-            unifi_device=UniFiDevice(id="MOCKED_ID", info=device),
+            unifi_device=UniFiDevice(id="MOCKED_DEVICE_ID", info=device),
             port_info=device["ports"][port_idx],
         )
 
@@ -108,7 +108,7 @@ class TestHappyPathFeatures(TestUniFiApi):
         expected: bool,
     ):
         mock_response = responses.put(
-            url=f"{unifi_api.controller_url}{UniFiAPI.REST_DEVICE_ENDPOINT}/MOCKED_ID",
+            url=f"{unifi_api.controller_url}{UniFiAPI.REST_DEVICE_ENDPOINT}/MOCKED_DEVICE_ID",
             json=json.loads(DEVICES_JSON_RESPONSE),
             match=[
                 matchers.header_matcher(RESPONSE_HEADER),
@@ -121,11 +121,11 @@ class TestHappyPathFeatures(TestUniFiApi):
         unifi_devices: UniFiDevices = UniFiDevices(unifi_api=unifi_api)
         unifi_devices.scan()
 
-        device = unifi_devices.unifi_device_map["MOCKED_ID"]
+        device = unifi_devices.unifi_device_map["MOCKED_DEVICE_ID"]
 
         feature = FeaturePort(
             unifi_devices=unifi_devices,
-            unifi_device=UniFiDevice(id="MOCKED_ID", info=device),
+            unifi_device=UniFiDevice(id="MOCKED_DEVICE_ID", info=device),
             port_info=device["ports"][port_idx],
         )
 

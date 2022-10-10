@@ -8,7 +8,7 @@ DEVICES_JSON_RESPONSE: Final[
     },
     "data": [
         {
-            "_id": "MOCKED_ID",
+            "_id": "MOCKED_DEVICE_ID",
             "adopted": true,
             "anomalies": -1,
             "anon_id": "ef1c5fdb-7f24-4806-88d9-76db276a9b01",
@@ -577,7 +577,7 @@ DEVICES_NOT_ADOPTED_JSON_RESPONSE: Final[
     },
     "data": [
         {
-            "_id": "MOCKED_ID",
+            "_id": "MOCKED_DEVICE_ID",
             "adopted": false,
             "anomalies": -1,
             "anon_id": "ef1c5fdb-7f24-4806-88d9-76db276a9b01",

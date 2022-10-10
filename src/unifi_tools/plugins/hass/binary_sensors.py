@@ -3,6 +3,7 @@ import json
 from asyncio import Task
 from typing import Any
 from typing import List
+from typing import Optional
 from typing import Set
 from typing import Tuple
 
@@ -31,10 +32,11 @@ class HassBinarySensorsDiscovery(HassBaseDiscovery):
         topic: str = f"{self.config.homeassistant.discovery_prefix}/binary_sensor/{feature.topic}/config"
         poe_on_states: str = "'" + FeaturePoEState.POE + "', '" + FeaturePoEState.POE24V + "'"
 
+        object_id: Optional[str] = self._get_object_id(feature)
+
         message: dict = {
             "name": f"{feature.friendly_name}",
             "unique_id": f"{self.config.device_info.name.lower()}-{feature.unique_id}",
-            "object_id": f"{self.config.device_info.name.lower()}-{feature.unique_id}",
             "json_attributes_topic": f"{feature.topic}/get",
             "state_topic": f"{feature.topic}/get",
             "value_template": "{% if value_json.poe_mode in [" + poe_on_states + "] %}on{% else %}off{% endif %}",
@@ -49,6 +51,9 @@ class HassBinarySensorsDiscovery(HassBaseDiscovery):
                 "manufacturer": self.config.device_info.manufacturer,
             },
         }
+
+        if object_id:
+            message["object_id"] = object_id
 
         return topic, message
 

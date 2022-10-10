@@ -63,15 +63,15 @@ class TestHappyPathHassBinarySensorsMqttPlugin(TestUniFiApi):
             assert "[API] Reading adopted devices." in logs
 
             assert (
-                '[MQTT] [homeassistant/binary_sensor/mocked_unifi/MOCKED_ID-port-1/config] Publishing message: {"name": "MOCKED Port 1", "unique_id": "mocked_unifi-MOCKED_ID-port-1", "object_id": "mocked_unifi-MOCKED_ID-port-1", "json_attributes_topic": "mocked_unifi/MOCKED_ID-port-1/get", "state_topic": "mocked_unifi/MOCKED_ID-port-1/get", "value_template": "{% if value_json.poe_mode in [\'auto\', \'pasv24\'] %}on{% else %}off{% endif %}", "payload_on": "on", "payload_off": "off", "qos": 2, "device": {"name": "MOCKED SWITCH", "identifiers": "MOCKED_ID", "model": "MOCKED MODEL", "sw_version": "MOCKED 6.2.14.13855", "manufacturer": "Ubiquiti Inc."}}'
+                '[MQTT] [homeassistant/binary_sensor/mocked_unifi/MOCKED_DEVICE_ID-port-1/config] Publishing message: {"name": "MOCKED Port 1", "unique_id": "mocked_unifi-MOCKED_DEVICE_ID-port-1", "json_attributes_topic": "mocked_unifi/MOCKED_DEVICE_ID-port-1/get", "state_topic": "mocked_unifi/MOCKED_DEVICE_ID-port-1/get", "value_template": "{% if value_json.poe_mode in [\'auto\', \'pasv24\'] %}on{% else %}off{% endif %}", "payload_on": "on", "payload_off": "off", "qos": 2, "device": {"name": "MOCKED SWITCH", "identifiers": "MOCKED_DEVICE_ID", "model": "MOCKED MODEL", "sw_version": "MOCKED 6.2.14.13855", "manufacturer": "Ubiquiti Inc."}, "object_id": "MOCKED_ID"}'
                 in logs
             )
             assert (
-                '[MQTT] [homeassistant/binary_sensor/mocked_unifi/MOCKED_ID-port-2/config] Publishing message: {"name": "MOCKED Port 2", "unique_id": "mocked_unifi-MOCKED_ID-port-2", "object_id": "mocked_unifi-MOCKED_ID-port-2", "json_attributes_topic": "mocked_unifi/MOCKED_ID-port-2/get", "state_topic": "mocked_unifi/MOCKED_ID-port-2/get", "value_template": "{% if value_json.poe_mode in [\'auto\', \'pasv24\'] %}on{% else %}off{% endif %}", "payload_on": "on", "payload_off": "off", "qos": 2, "device": {"name": "MOCKED SWITCH", "identifiers": "MOCKED_ID", "model": "MOCKED MODEL", "sw_version": "MOCKED 6.2.14.13855", "manufacturer": "Ubiquiti Inc."}}'
+                '[MQTT] [homeassistant/binary_sensor/mocked_unifi/MOCKED_DEVICE_ID-port-2/config] Publishing message: {"name": "MOCKED Port 2", "unique_id": "mocked_unifi-MOCKED_DEVICE_ID-port-2", "json_attributes_topic": "mocked_unifi/MOCKED_DEVICE_ID-port-2/get", "state_topic": "mocked_unifi/MOCKED_DEVICE_ID-port-2/get", "value_template": "{% if value_json.poe_mode in [\'auto\', \'pasv24\'] %}on{% else %}off{% endif %}", "payload_on": "on", "payload_off": "off", "qos": 2, "device": {"name": "MOCKED SWITCH", "identifiers": "MOCKED_DEVICE_ID", "model": "MOCKED MODEL", "sw_version": "MOCKED 6.2.14.13855", "manufacturer": "Ubiquiti Inc."}, "object_id": "MOCKED_ID"}'
                 in logs
             )
             assert (
-                '[MQTT] [homeassistant/binary_sensor/mocked_unifi/MOCKED_ID-port-3/config] Publishing message: {"name": "MOCKED Port 3", "unique_id": "mocked_unifi-MOCKED_ID-port-3", "object_id": "mocked_unifi-MOCKED_ID-port-3", "json_attributes_topic": "mocked_unifi/MOCKED_ID-port-3/get", "state_topic": "mocked_unifi/MOCKED_ID-port-3/get", "value_template": "{% if value_json.poe_mode in [\'auto\', \'pasv24\'] %}on{% else %}off{% endif %}", "payload_on": "on", "payload_off": "off", "qos": 2, "device": {"name": "MOCKED SWITCH", "identifiers": "MOCKED_ID", "model": "MOCKED MODEL", "sw_version": "MOCKED 6.2.14.13855", "manufacturer": "Ubiquiti Inc."}}'
+                '[MQTT] [homeassistant/binary_sensor/mocked_unifi/MOCKED_DEVICE_ID-port-3/config] Publishing message: {"name": "MOCKED Port 3", "unique_id": "mocked_unifi-MOCKED_DEVICE_ID-port-3", "json_attributes_topic": "mocked_unifi/MOCKED_DEVICE_ID-port-3/get", "state_topic": "mocked_unifi/MOCKED_DEVICE_ID-port-3/get", "value_template": "{% if value_json.poe_mode in [\'auto\', \'pasv24\'] %}on{% else %}off{% endif %}", "payload_on": "on", "payload_off": "off", "qos": 2, "device": {"name": "MOCKED SWITCH", "identifiers": "MOCKED_DEVICE_ID", "model": "MOCKED MODEL", "sw_version": "MOCKED 6.2.14.13855", "manufacturer": "Ubiquiti Inc."}, "object_id": "MOCKED_ID"}'
                 in logs
             )
 
@@ -101,9 +101,9 @@ class TestHappyPathHassBinarySensorsMqttPlugin(TestUniFiApi):
         topic, message = plugin._hass._get_discovery(feature)
 
         assert "MOCKED Port 1" == message["name"]
-        assert "mocked_unifi-MOCKED_ID-port-1" == message["unique_id"]
-        assert "mocked_unifi-MOCKED_ID-port-1" == message["object_id"]
-        assert "mocked_unifi/MOCKED_ID-port-1/get" == message["state_topic"]
+        assert "mocked_unifi-MOCKED_DEVICE_ID-port-1" == message["unique_id"]
+        assert "MOCKED_ID" == message["object_id"]
+        assert "mocked_unifi/MOCKED_DEVICE_ID-port-1/get" == message["state_topic"]
         assert (
             "{% if value_json.poe_mode in ['auto', 'pasv24'] %}on{% else %}off{% endif %}" == message["value_template"]
         )
@@ -111,9 +111,9 @@ class TestHappyPathHassBinarySensorsMqttPlugin(TestUniFiApi):
         assert "off" == message["payload_off"]
         assert 2 == message["qos"]
         assert "MOCKED SWITCH" == message["device"]["name"]
-        assert "MOCKED_ID" == message["device"]["identifiers"]
+        assert "MOCKED_DEVICE_ID" == message["device"]["identifiers"]
         assert "MOCKED MODEL" == message["device"]["model"]
         assert "MOCKED 6.2.14.13855" == message["device"]["sw_version"]
         assert "Ubiquiti Inc." == message["device"]["manufacturer"]
 
-        assert "homeassistant/binary_sensor/mocked_unifi/MOCKED_ID-port-1/config" == topic
+        assert "homeassistant/binary_sensor/mocked_unifi/MOCKED_DEVICE_ID-port-1/config" == topic

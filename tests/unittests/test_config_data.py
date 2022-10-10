@@ -19,11 +19,22 @@ logging:
   level: debug
 """
 
-CONFIG_INVALID_TYPE: Final[
+CONFIG_INVALID_FEATURE_TYPE: Final[
     str
 ] = """device_info:
   name: MOCKED_DEVICE
 features: INVALID
+logging:
+  level: debug
+"""
+
+CONFIG_INVALID_FEATURE_PROPERTY: Final[
+    str
+] = """device_info:
+  name: MOCKED_DEVICE
+features:
+  MOCKED_DEVICE_ID:
+    invalid_property: INVALID
 logging:
   level: debug
 """

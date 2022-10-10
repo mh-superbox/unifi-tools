@@ -52,6 +52,12 @@ class UniFiControllerConfig(ConfigLoaderMixin):
 
 
 @dataclass
+class FeatureConfig(ConfigLoaderMixin):
+    id: str = field(default_factory=str)
+    ports: list = field(default_factory=list)
+
+
+@dataclass
 class Config(ConfigLoaderMixin):
     device_info: DeviceInfo = field(default=DeviceInfo())
     mqtt: MqttConfig = field(default_factory=MqttConfig)
@@ -66,5 +72,13 @@ class Config(ConfigLoaderMixin):
         self.update_from_yaml_file(config_path=self.config_file_path)
         self.logging.update_level(name=LOG_NAME)
 
-    def get_feature(self, device_id: str) -> dict:
-        return self.features.get(device_id, {})
+    def validate(self):
+        super().validate()
+
+        for device_id, feature_data in self.features.items():
+            try:
+                feature_config: FeatureConfig = FeatureConfig(**feature_data)
+                feature_config.validate()
+                self.features[device_id] = feature_config
+            except TypeError:
+                raise ConfigException(f"Invalid feature property: {feature_data}")

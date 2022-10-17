@@ -42,6 +42,7 @@ class UniFiTools:
 
     async def _init_tasks(self, stack: AsyncExitStack, mqtt_client: Client):
         tasks: Set[Task] = set()
+        stack.push_async_callback(cancel_tasks)
 
         features = FeaturesMqttPlugin(unifi_devices=self.unifi_devices, mqtt_client=mqtt_client)
         features_tasks = await features.init_tasks(stack)

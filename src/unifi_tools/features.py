@@ -1,14 +1,16 @@
+import itertools
 import json
 from abc import ABC
 from abc import abstractmethod
 from collections.abc import Iterator
+from functools import cached_property
+from typing import Dict
 from typing import Final
 from typing import List
 from typing import Optional
 
-import itertools
+from superbox_utils.text.text import slugify
 
-from superbox_utils.dict.data_dict import DataDict
 from unifi_tools.config import Config
 from unifi_tools.config import FeatureConfig
 
@@ -48,46 +50,54 @@ class Feature(ABC):
     def __repr__(self) -> str:
         return self.friendly_name
 
-    @property
-    @abstractmethod
-    def value(self) -> dict:
-        pass
-
-    @property
+    @cached_property
     @abstractmethod
     def feature_name(self) -> str:
         pass
 
-    @property
+    @cached_property
     @abstractmethod
     def friendly_name(self) -> str:
-        pass
+        """Abstract method for friendly name."""
+        pass  # pylint: disable=unnecessary-pass
 
-    @property
+    @cached_property
     @abstractmethod
     def device_id(self) -> str:
-        pass
+        """Abstract method for device id."""
+        pass  # pylint: disable=unnecessary-pass
 
-    @property
+    @cached_property
     @abstractmethod
     def unique_id(self) -> str:
-        pass
+        """Return unique id for Home Assistant."""
+        pass  # pylint: disable=unnecessary-pass
 
-    @property
+    @cached_property
     @abstractmethod
     def topic(self) -> str:
-        pass
+        """Return Unique name for the MQTT topic."""
+        pass  # pylint: disable=unnecessary-pass
 
     @property
     @abstractmethod
-    def json_attributes(self) -> str:
-        pass
+    def payload(self) -> str:
+        """Abstract method for payload."""
+        pass  # pylint: disable=unnecessary-pass
+
+    @property
+    @abstractmethod
+    def value(self) -> dict:
+        """Abstract method for value."""
+        pass  # pylint: disable=unnecessary-pass
 
     @property
     def changed(self) -> bool:
-        changed: bool = self.value != self._value
+        """Detect whether the status has changed."""
+        changed: bool = False
 
-        if changed:
+        if self.value != self._value:
+            changed = True
             self._value = self.value
 
         return changed
@@ -105,16 +115,14 @@ class FeaturePort(Feature):
 
     @property
     def real_poe_mode(self) -> str:
-        device_info = self.unifi_devices.unifi_device_map.get(self.unifi_device.id)
+        device_info = self.unifi_devices.unifi_device_map.data.get(self.unifi_device.id)
         port = device_info["ports"][self.port_info.idx]
 
         return port.poe_mode
 
     @property
     def poe_mode(self) -> str:
-        poe_mode: str = self.real_poe_mode
-
-        if poe_mode in [FeaturePoEState.POE24V, FeaturePoEState.POE]:
+        if (poe_mode := self.real_poe_mode) in [FeaturePoEState.POE24V, FeaturePoEState.POE]:
             poe_mode = FeaturePoEState.ON
 
         return poe_mode
@@ -128,45 +136,44 @@ class FeaturePort(Feature):
 
         return _value
 
-    @property
+    @cached_property
     def feature_name(self) -> str:
         return FeatureConst.PORT
 
-    @property
+    @cached_property
     def friendly_name(self) -> str:
         if self.port_info.name:
             return self.port_info.name
 
         return f"{self.name} #{self.port_info.idx:02d}"
 
-    @property
+    @cached_property
     def device_id(self) -> str:
         _device_id: str = self.unifi_device.id
-        features_config: Optional[FeatureConfig] = self.config.features.get(self.unifi_device.id)
 
-        if features_config:
-            _device_id = features_config.id
+        if features_config := self.config.features.get(self.unifi_device.id):
+            _device_id = features_config.object_id
 
         return _device_id.lower()
 
-    @property
+    @cached_property
     def unique_id(self) -> str:
-        return f"{self.config.device_info.name.lower()}-{self.unifi_device.id.lower()}-{self.feature_name.lower()}-{self.port_info.idx}"
+        return f"{slugify(self.config.device_info.name)}-{self.unifi_device.id.lower()}-{self.feature_name.lower()}-{self.port_info.idx}"
 
-    @property
+    @cached_property
     def object_id(self) -> str:
         return (
-            f"{self.config.device_info.name.lower()}-{self.device_id}-{self.feature_name.lower()}-{self.port_info.idx}"
+            f"{slugify(self.config.device_info.name)}-{self.device_id}-{self.feature_name.lower()}-{self.port_info.idx}"
         )
 
-    @property
+    @cached_property
     def topic(self) -> str:
         return (
-            f"{self.config.device_info.name.lower()}/{self.device_id}-{self.feature_name.lower()}-{self.port_info.idx}"
+            f"{slugify(self.config.device_info.name)}/{self.device_id}-{self.feature_name.lower()}-{self.port_info.idx}"
         )
 
     @property
-    def json_attributes(self) -> str:
+    def payload(self) -> str:
         _json_attributes: dict = {}
 
         if self.real_poe_mode:
@@ -222,12 +229,34 @@ class FeaturePort(Feature):
         return update_devices
 
 
-class FeatureMap(DataDict):
+class FeatureMap:
+    def __init__(self):
+        self.data: Dict[str, List[Feature]] = {}
+
     def register(self, feature: Feature):
-        if not self.get(feature.feature_name):
-            self[feature.feature_name] = []
+        """Add a feature to the data storage.
 
-        self[feature.feature_name].append(feature)
+        Parameters
+        ----------
+        feature: Feature
+        """
+        if not self.data.get(feature.feature_name):
+            self.data[feature.feature_name] = []
 
-    def by_feature_type(self, feature_type: List[str]) -> Iterator:
-        return itertools.chain.from_iterable(filter(None, map(self.data.get, feature_type)))
+        self.data[feature.feature_name].append(feature)
+
+    def by_feature_types(self, feature_types: List[str]) -> Iterator:
+        """Filter features by feature type.
+
+        Parameters
+        ----------
+        feature_types: list
+
+        Returns
+        -------
+        Iterator
+            A list of features filtered by feature type.
+        """
+        return itertools.chain.from_iterable(
+            [item for item in (self.data.get(feature_type) for feature_type in feature_types) if item is not None]
+        )

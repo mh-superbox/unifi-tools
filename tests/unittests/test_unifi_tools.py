@@ -1,16 +1,16 @@
+import builtins
 import subprocess
 from argparse import Namespace
 from typing import List
 
-import builtins
-import pytest as pytest
-from _pytest.capture import CaptureFixture
-from _pytest.logging import LogCaptureFixture
+import pytest
+from _pytest.capture import CaptureFixture  # pylint: disable=import-private-name
+from _pytest.logging import LogCaptureFixture  # pylint: disable=import-private-name
 from pytest_mock.plugin import MockerFixture
 
 from conftest_data import CONFIG_CONTENT
-from unifi_tools.run import UniFiTools
-from unifi_tools.run import parse_args
+from unifi_tools.unifi_tools import UniFiTools
+from unifi_tools.unifi_tools import parse_args
 from unittests.test_unifi_tools_data import UNIFI_TOOLS_INSTALLER_WITHOUT_ENABLE_SYSTEMD_OUTPUT
 from unittests.test_unifi_tools_data import UNIFI_TOOLS_INSTALLER_WITHOUT_OVERWRITE_CONFIG_OUTPUT
 from unittests.test_unifi_tools_data import UNIFI_TOOLS_INSTALLER_WITH_ENABLE_SYSTEMD_OUTPUT

@@ -6,8 +6,7 @@ from dataclasses import dataclass
 from dataclasses import field
 from pathlib import Path
 from typing import Final
-from typing import Match
-from typing import Optional
+from typing import List
 
 from superbox_utils.config.exception import ConfigException
 from superbox_utils.config.loader import ConfigLoaderMixin
@@ -17,7 +16,8 @@ from superbox_utils.logging import init_logger
 from superbox_utils.logging import stream_handler
 from superbox_utils.logging.config import LoggingConfig
 from superbox_utils.mqtt.config import MqttConfig
-from unifi_tools.logging import LOG_NAME
+
+from unifi_tools.log import LOG_NAME
 
 logger: logging.Logger = init_logger(name=LOG_NAME, level="info", handlers=[stream_handler])
 
@@ -25,6 +25,8 @@ logger: logging.Logger = init_logger(name=LOG_NAME, level="info", handlers=[stre
 class LogPrefix:
     API: Final[str] = "[API]"
     CONFIG: Final[str] = "[CONFIG]"
+    DEVICEINFO: Final[str] = "[DEVICEINFO]"
+    FEATURE: Final[str] = "[FEATURE]"
     MQTT: Final[str] = "[MQTT]"
 
 
@@ -34,11 +36,11 @@ class DeviceInfo(ConfigLoaderMixin):
     manufacturer: str = field(default="Ubiquiti Inc.")
 
     @staticmethod
-    def _validate_name(value: str, f: dataclasses.Field) -> str:
-        result: Optional[Match[str]] = re.search(Validation.ALLOWED_CHARACTERS.regex, value)
-
-        if result is None:
-            raise ConfigException(f"Invalid value '{value}' in '{f.name}'. {Validation.ALLOWED_CHARACTERS.error}")
+    def _validate_name(value: str, _field: dataclasses.Field) -> str:
+        if re.search(Validation.NAME.regex, value) is None:
+            raise ConfigException(
+                f"{LogPrefix.DEVICEINFO} Invalid value '{value}' in '{_field.name}'. {Validation.NAME.error}"
+            )
 
         return value
 
@@ -53,8 +55,19 @@ class UniFiControllerConfig(ConfigLoaderMixin):
 
 @dataclass
 class FeatureConfig(ConfigLoaderMixin):
-    id: str = field(default_factory=str)
+    object_id: str = field(default_factory=str)
     ports: list = field(default_factory=list)
+
+    @staticmethod
+    def _validate_object_id(value: str, _field: dataclasses.Field) -> str:
+        value = value.lower()
+
+        if re.search(Validation.ID.regex, value) is None:
+            raise ConfigException(
+                f"{LogPrefix.FEATURE} Invalid value '{value}' in '{_field.name}'. {Validation.ID.error}"
+            )
+
+        return value
 
 
 @dataclass
@@ -72,13 +85,27 @@ class Config(ConfigLoaderMixin):
         self.update_from_yaml_file(config_path=self.config_file_path)
         self.logging.update_level(name=LOG_NAME)
 
-    def validate(self):
-        super().validate()
+        self.init()
+
+    def init(self):
+        """Initialize configuration and start custom validation."""
 
         for device_id, feature_data in self.features.items():
             try:
                 feature_config: FeatureConfig = FeatureConfig(**feature_data)
                 feature_config.validate()
                 self.features[device_id] = feature_config
-            except TypeError:
-                raise ConfigException(f"Invalid feature property: {feature_data}")
+            except TypeError as error:
+                raise ConfigException(f"Invalid feature property: {feature_data}") from error
+
+        self._validate_feature_object_ids()
+
+    def _validate_feature_object_ids(self):
+        object_ids: List[str] = []
+
+        for feature in self.features.values():
+            if feature.object_id in object_ids:
+                raise ConfigException(f"{LogPrefix.FEATURE} Duplicate ID '{feature.object_id}' found in 'features'!")
+
+            if feature.object_id:
+                object_ids.append(feature.object_id)

@@ -4,10 +4,9 @@ from typing import Optional
 
 import pytest
 import responses
-from _pytest.logging import LogCaptureFixture
+from _pytest.logging import LogCaptureFixture  # pylint: disable=import-private-name
 from responses import matchers
 
-from conftest import ConfigLoader
 from conftest_data import CONFIG_CONTENT
 from unifi_tools.features import FeatureConst
 from unifi_tools.features import FeaturePort
@@ -25,7 +24,7 @@ class TestHappyPathUniFiDevices(TestUniFiApi):
     @responses.activate
     @pytest.fixture(autouse=True)
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def setup(self, config_loader: ConfigLoader, unifi_api: UniFiAPI):
+    def setup(self, unifi_api: UniFiAPI):
         mock_response = responses.get(
             url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
             json=json.loads(DEVICES_JSON_RESPONSE),
@@ -36,67 +35,67 @@ class TestHappyPathUniFiDevices(TestUniFiApi):
 
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_device_info(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_device_info(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         unifi_devices: UniFiDevices = UniFiDevices(unifi_api=unifi_api)
         device_info: Optional[dict] = unifi_devices.get_device_info(device_id="MOCKED_DEVICE_ID")
 
         logs: list = [record.getMessage() for record in caplog.records]
 
         assert "[API] [ok] https://unifi.local/api/s/default/stat/device" in logs
-        assert 2 == len(logs)
+        assert len(logs) == 2
 
         assert isinstance(device_info, dict)
-        assert "MOCKED_DEVICE_ID" == device_info["_id"]
+        assert device_info["_id"] == "MOCKED_DEVICE_ID"
 
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_scan(self, config_loader: ConfigLoader, unifi_api: UniFiAPI):
+    def test_scan(self, unifi_api: UniFiAPI):
         unifi_devices: UniFiDevices = UniFiDevices(unifi_api=unifi_api)
 
-        assert 0 == len(unifi_devices.unifi_device_map)
+        assert not unifi_devices.unifi_device_map.data
         unifi_devices.scan()
-        assert 1 == len(unifi_devices.unifi_device_map)
+        assert len(unifi_devices.unifi_device_map.data) == 1
 
-        device = unifi_devices.unifi_device_map["MOCKED_DEVICE_ID"]
+        device = unifi_devices.unifi_device_map.data["MOCKED_DEVICE_ID"]
         port = device["ports"][1]
 
         assert isinstance(port, UniFiPort)
-        assert "MOCKED SWITCH" == device["name"]
-        assert "MOCKED MODEL" == device["model"]
-        assert "MOCKED 6.2.14.13855" == device["version"]
-        assert 4 == len(device.keys())
+        assert device["name"] == "MOCKED SWITCH"
+        assert device["model"] == "MOCKED MODEL"
+        assert device["version"] == "MOCKED 6.2.14.13855"
+        assert len(device.keys()) == 4
 
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_read_devices(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_read_devices(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         unifi_devices: UniFiDevices = UniFiDevices(unifi_api=unifi_api)
 
-        assert 0 == len(unifi_devices.features)
+        assert not unifi_devices.features.data
         unifi_devices.read_devices()
 
         logs: list = [record.getMessage() for record in caplog.records]
 
         assert "[API] Reading adopted devices." in logs
-        assert 1 == len(logs)
+        assert len(logs) == 1
 
-        features = unifi_devices.features.by_feature_type(["port"])
+        features = unifi_devices.features.by_feature_types(["port"])
 
         feature = next(features)
-        ports = unifi_devices.features[FeatureConst.PORT]
+        ports = unifi_devices.features.data[FeatureConst.PORT]
 
-        assert FEATURE_MAP_REPR == str(unifi_devices.features)
+        assert str(unifi_devices.features.data) == FEATURE_MAP_REPR
         assert isinstance(features, Iterator)
         assert isinstance(ports, list)
         assert isinstance(feature, FeaturePort)
-        assert 26 == len(ports)
-        assert "MOCKED Port 1" == str(feature)
-        assert {"poe_mode": "on"} == feature.value
+        assert len(ports) == 26
+        assert str(feature) == "MOCKED Port 1"
+        assert feature.value == {"poe_mode": "on"}
 
 
 class TestUnhappyPathUniFiDevices(TestUniFiApi):
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_device_info_not_adopted(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_device_info_not_adopted(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.get(
             url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
             json=json.loads(DEVICES_NOT_ADOPTED_JSON_RESPONSE),
@@ -110,6 +109,6 @@ class TestUnhappyPathUniFiDevices(TestUniFiApi):
         logs: list = [record.getMessage() for record in caplog.records]
 
         assert "[API] [ok] https://unifi.local/api/s/default/stat/device" in logs
-        assert 2 == len(logs)
+        assert len(logs) == 2
 
-        assert 0 == len(device_info)
+        assert not device_info

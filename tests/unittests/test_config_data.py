@@ -3,7 +3,7 @@ from typing import Final
 CONFIG_INVALID_DEVICE_NAME: Final[
     str
 ] = """device_info:
-  name: Invalid Device Name
+  name: INVALID DEVICE NAME$
 logging:
   level: debug
 """
@@ -15,6 +15,30 @@ CONFIG_INVALID_HOMEASSISTANT_DISCOVERY_PREFIX: Final[
 homeassistant:
   enabled: true
   discovery_prefix: INVALID DISCOVERY NAME
+logging:
+  level: debug
+"""
+
+CONFIG_DUPLICATE_OBJECT_ID: Final[
+    str
+] = """device_info:
+  name: MOCKED_DEVICE
+features:
+  MOCKED_DEVICE_ID_1:
+    object_id: mocked_duplicate_id
+  MOCKED_DEVICE_ID_2:
+    object_id: mocked_duplicate_id
+logging:
+  level: debug
+"""
+
+CONFIG_INVALID_FEATURE_ID: Final[
+    str
+] = """device_info:
+  name: MOCKED_DEVICE
+features:
+  MOCKED_DEVICE_ID:
+    object_id: INVALID ID
 logging:
   level: debug
 """

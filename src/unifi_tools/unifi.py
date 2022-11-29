@@ -1,5 +1,5 @@
-import asyncio
 import json
+import sys
 from json import JSONDecodeError
 from typing import Dict
 from typing import Final
@@ -8,12 +8,9 @@ from typing import NamedTuple
 from typing import Optional
 from typing import Tuple
 
-import requests
-import sys
+import requests  # type: ignore
 from requests import Response
 
-from superbox_utils.asyncio import cancel_tasks
-from superbox_utils.dict.data_dict import DataDict
 from unifi_tools.config import Config
 from unifi_tools.config import LogPrefix
 from unifi_tools.config import logger
@@ -28,7 +25,10 @@ class UniFiPort(NamedTuple):
     poe_mode: Optional[str]
 
 
-class UniFiDeviceMap(DataDict):
+class UniFiDeviceMap:
+    def __init__(self):
+        self.data: dict = {}
+
     def initialise(self, device_infos: List[dict]):
         for device_info in device_infos:
             if device_info.get("adopted") is True:
@@ -72,7 +72,7 @@ class UniFiAPI:
 
     def __init__(self, config: Config):
         self.config: Config = config
-        self.rc: int = 0
+        self.return_code: int = 0
 
         self._session = requests.Session()
         self._session.hooks["response"].append(self._reconnect)
@@ -90,7 +90,7 @@ class UniFiAPI:
             method="post",
             url=f"{self.controller_url}{self.LOGIN_ENDPOINT}",
             headers=self._headers,
-            json={
+            json_data={
                 "username": self.config.unifi_controller.username,
                 "password": self.config.unifi_controller.password,
             },
@@ -144,7 +144,7 @@ class UniFiAPI:
             method="put",
             url=f"{self.controller_url}{self.REST_DEVICE_ENDPOINT}/{device_id}",
             headers=self._headers,
-            json=port_overrides,
+            json_data=port_overrides,
         )
 
         logger.debug("%s [update_device] %s", LogPrefix.API, device_id)
@@ -152,7 +152,7 @@ class UniFiAPI:
         return result, response
 
     def _request_url(
-        self, url, method: str, headers: dict, json: Optional[dict] = None, log: bool = True
+        self, url, method: str, headers: dict, json_data: Optional[dict] = None, log: bool = True
     ) -> Tuple[Optional[UniFiAPIResult], Optional[Response]]:
         result: Optional[UniFiAPIResult] = None
         response: Optional[Response] = None
@@ -162,22 +162,17 @@ class UniFiAPI:
                 method=method,
                 url=url,
                 headers=headers,
-                json=json,
+                json=json_data,
                 verify=False,
             )
 
             response.raise_for_status()
-        except requests.ConnectionError as e:
-            logger.debug("%s %s", LogPrefix.API, e)
-            self._exit(1)
-        except requests.HTTPError as e:
-            logger.error("%s %s", LogPrefix.API, e)
-            self._exit(1)
+        except (requests.ConnectionError, requests.HTTPError) as error:
+            logger.debug("%s %s", LogPrefix.API, error)
+            sys.exit(1)
         finally:
             if response:
-                result = self._get_json(response)
-
-                if result:
+                if result := self._get_json(response):
                     meta_info: str = f"""[{result.meta.get('rc')}]{f" {result.meta['msg']}" if result.meta.get('msg') else ""} {response.url}"""
 
                     if log is True:
@@ -185,7 +180,8 @@ class UniFiAPI:
 
         return result, response
 
-    def _get_json(self, response: Response) -> Optional[UniFiAPIResult]:
+    @staticmethod
+    def _get_json(response: Response) -> Optional[UniFiAPIResult]:
         result: Optional[UniFiAPIResult] = None
 
         try:
@@ -193,12 +189,12 @@ class UniFiAPI:
             result = UniFiAPIResult(meta=data.get("meta", {}), data=data.get("data", []))
         except JSONDecodeError:
             logger.error("%s JSON decode error. API not available! Shutdown UniFi Tools.", LogPrefix.API)
-            self._exit(1)
+            sys.exit(1)
 
         return result
 
-    def _reconnect(self, response: Response, *args, **kwargs):
-        if response.status_code == requests.codes.unauthorized:
+    def _reconnect(self, response: Response, *args, **kwargs):  # pylint: disable=unused-argument
+        if response.status_code == requests.codes["unauthorized"]:
             data: dict = json.loads(response.text)
             meta: dict = data.get("meta", {})
 
@@ -211,13 +207,7 @@ class UniFiAPI:
 
             return self._session.send(response.request, verify=False)
 
-    def _exit(self, rc):
-        self.rc = rc
-
-        if asyncio.get_event_loop().is_running():
-            cancel_tasks()
-        else:
-            sys.exit(rc)
+        return None
 
 
 class UniFiDevice(NamedTuple):
@@ -233,7 +223,7 @@ class UniFiDevices:
         self.config: Config = unifi_api.config
 
     def get_device_info(self, device_id: str) -> dict:
-        result, response = self.unifi_api.list_all_devices()
+        result, response = self.unifi_api.list_all_devices()  # pylint: disable=unused-variable
         device_info: dict = {}
 
         if result:
@@ -247,7 +237,7 @@ class UniFiDevices:
         return device_info
 
     def scan(self):
-        result, response = self.unifi_api.list_all_devices(log=False)
+        result, response = self.unifi_api.list_all_devices(log=False)  # pylint: disable=unused-variable
 
         if result:
             self.unifi_device_map.initialise(result.data)
@@ -259,7 +249,7 @@ class UniFiDevices:
         if self.unifi_device_map is None:
             logger.debug("%s Can't read adopted devices!", LogPrefix.API)
         else:
-            for device_id, device_info in self.unifi_device_map.items():
+            for device_id, device_info in self.unifi_device_map.data.items():
                 if device_info["ports"]:
                     unifi_switch: UniFiSwitch = UniFiSwitch(
                         unifi_devices=self,

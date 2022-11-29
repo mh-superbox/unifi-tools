@@ -1,12 +1,12 @@
 import json
 
 import pytest
-import requests
+import requests  # type: ignore
 import responses
-from _pytest.logging import LogCaptureFixture
+from _pytest.logging import LogCaptureFixture  # pylint: disable=import-private-name
 from requests import Response
 from responses import matchers
-from responses.registries import OrderedRegistry
+from responses.registries import OrderedRegistry  # pylint: disable=import-private-name
 
 from conftest import ConfigLoader
 from conftest_data import CONFIG_CONTENT
@@ -51,7 +51,7 @@ class TestHappyPathUniFiApi(TestUniFiApi):
 
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_login(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_login(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.post(
             url=f"{unifi_api.controller_url}{UniFiAPI.LOGIN_ENDPOINT}",
             json={
@@ -68,18 +68,18 @@ class TestHappyPathUniFiApi(TestUniFiApi):
         assert "[API] [ok] https://unifi.local/api/login" in logs
         assert "[API] Successfully logged in." in logs
         assert "[API] CSRF Token: None" in logs
-        assert 3 == len(logs)
+        assert len(logs) == 3
 
         assert isinstance(result, UniFiAPIResult)
         assert isinstance(response, Response)
 
-        assert "ok" == result.meta["rc"]
-        assert requests.codes.ok == response.status_code
-        assert 1 == mock_response.call_count
+        assert result.meta["rc"] == "ok"
+        assert response.status_code == requests.codes["ok"]
+        assert mock_response.call_count == 1
 
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_logout(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_logout(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.post(
             url=f"{unifi_api.controller_url}{UniFiAPI.LOGOUT_ENDPOINT}",
             json={
@@ -102,18 +102,18 @@ class TestHappyPathUniFiApi(TestUniFiApi):
 
         assert "[API] [ok] https://unifi.local/api/logout" in logs
         assert "[API] Successfully logged out." in logs
-        assert 2 == len(logs)
+        assert len(logs) == 2
 
         assert isinstance(result, UniFiAPIResult)
         assert isinstance(response, Response)
 
-        assert "ok" == result.meta["rc"]
-        assert requests.codes.ok == response.status_code
-        assert 1 == mock_response.call_count
+        assert result.meta["rc"] == "ok"
+        assert response.status_code == requests.codes["ok"]
+        assert mock_response.call_count == 1
 
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_list_all_devices(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_list_all_devices(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.get(
             url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
             json=json.loads(DEVICES_JSON_RESPONSE),
@@ -126,18 +126,18 @@ class TestHappyPathUniFiApi(TestUniFiApi):
         logs: list = [record.getMessage() for record in caplog.records]
 
         assert "[API] [ok] https://unifi.local/api/s/default/stat/device" in logs
-        assert 2 == len(logs)
+        assert len(logs) == 2
 
         assert isinstance(result, UniFiAPIResult)
         assert isinstance(response, Response)
 
-        assert "ok" == result.meta["rc"]
-        assert requests.codes.ok == response.status_code
-        assert 1 == mock_response.call_count
+        assert result.meta["rc"] == "ok"
+        assert response.status_code == requests.codes["ok"]
+        assert mock_response.call_count == 1
 
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_update_device(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_update_device(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.put(
             url=f"{unifi_api.controller_url}{UniFiAPI.REST_DEVICE_ENDPOINT}/MOCKED_DEVICE_ID",
             json=json.loads(DEVICES_JSON_RESPONSE),
@@ -156,19 +156,21 @@ class TestHappyPathUniFiApi(TestUniFiApi):
 
         assert "[API] [ok] https://unifi.local/api/s/default/rest/device/MOCKED_DEVICE_ID" in logs
         assert "[API] [update_device] MOCKED_DEVICE_ID" in logs
-        assert 2 == len(logs)
+        assert len(logs) == 2
 
         assert isinstance(result, UniFiAPIResult)
         assert isinstance(response, Response)
 
-        assert "ok" == result.meta["rc"]
+        assert result.meta["rc"] == "ok"
         assert result.data is not None
-        assert requests.codes.ok == response.status_code
-        assert 1 == mock_response.call_count
+        assert response.status_code == requests.codes["ok"]
+        assert mock_response.call_count == 1
 
-    @responses.activate(registry=OrderedRegistry)
+    @responses.activate(  # pylint: disable=unexpected-keyword-arg disable=no-value-for-parameter
+        registry=OrderedRegistry
+    )
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_reconnect(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_reconnect(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_list_all_devices_failed_response = responses.get(
             url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
             json={
@@ -179,7 +181,7 @@ class TestHappyPathUniFiApi(TestUniFiApi):
                 "data": [],
             },
             match=[matchers.header_matcher(RESPONSE_HEADER)],
-            status=requests.codes.unauthorized,
+            status=requests.codes["unauthorized"],
         )
 
         mock_login_response = responses.post(
@@ -210,44 +212,42 @@ class TestHappyPathUniFiApi(TestUniFiApi):
         assert "[API] Successfully logged in." in logs
         assert "[API] CSRF Token: None" in logs
         assert "[API] [ok] https://unifi.local/api/s/default/stat/device" in logs
-        assert 6 == len(logs)
+        assert len(logs) == 6
 
         assert isinstance(result, UniFiAPIResult)
         assert isinstance(response, Response)
 
-        assert "ok" == result.meta["rc"]
-        assert requests.codes.ok == response.status_code
-        assert 1 == mock_list_all_devices_failed_response.call_count
-        assert 1 == mock_login_response.call_count
-        assert 1 == mock_list_all_devices_response.call_count
+        assert result.meta["rc"] == "ok"
+        assert response.status_code == requests.codes["ok"]
+        assert mock_list_all_devices_failed_response.call_count == 1
+        assert mock_login_response.call_count == 1
+        assert mock_list_all_devices_response.call_count == 1
 
 
 class TestUnhappyPathUniFiApi(TestUniFiApi):
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_exception_http_error(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_exception_http_error(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.post(
             url=f"{unifi_api.controller_url}{UniFiAPI.LOGIN_ENDPOINT}",
             match=[matchers.header_matcher(RESPONSE_HEADER)],
-            status=requests.codes.bad_gateway,
+            status=requests.codes["bad_gateway"],
         )
 
         responses.add(mock_response)
 
         with pytest.raises(SystemExit) as error:
             unifi_api.login()
-            assert 1 == error.value
+            assert error.value == 1
 
         logs: list = [record.getMessage() for record in caplog.records]
 
         assert "[API] 502 Server Error: Bad Gateway for url: https://unifi.local/api/login" in logs
-        assert 1 == len(logs)
+        assert len(logs) == 1
 
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_exception_connection_error(
-        self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture
-    ):
+    def test_exception_connection_error(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.post(
             url=f"{unifi_api.controller_url}{UniFiAPI.LOGIN_ENDPOINT}",
             body=requests.ConnectionError("MOCKED CONNECTION ERROR"),
@@ -257,16 +257,16 @@ class TestUnhappyPathUniFiApi(TestUniFiApi):
 
         with pytest.raises(SystemExit) as error:
             unifi_api.login()
-            assert 1 == error.value
+            assert error.value == 1
 
         logs: list = [record.getMessage() for record in caplog.records]
 
         assert "[API] MOCKED CONNECTION ERROR" in logs
-        assert 1 == len(logs)
+        assert len(logs) == 1
 
     @responses.activate
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_json_decode_error(self, config_loader: ConfigLoader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_json_decode_error(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         mock_response = responses.post(
             url=f"{unifi_api.controller_url}{UniFiAPI.LOGIN_ENDPOINT}",
             match=[matchers.header_matcher(RESPONSE_HEADER)],
@@ -277,9 +277,9 @@ class TestUnhappyPathUniFiApi(TestUniFiApi):
 
         with pytest.raises(SystemExit) as error:
             unifi_api.login()
-            assert 1 == error.value
+            assert error.value == 1
 
         logs: list = [record.getMessage() for record in caplog.records]
 
         assert "[API] JSON decode error. API not available! Shutdown UniFi Tools." in logs
-        assert 1 == len(logs)
+        assert len(logs) == 1

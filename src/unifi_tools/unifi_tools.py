@@ -1,34 +1,35 @@
-#!/usr/bin/env python3
 import argparse
 import asyncio
 import shutil
-import signal
 import subprocess
+import sys
 import uuid
 from asyncio import Task
 from contextlib import AsyncExitStack
 from pathlib import Path
 from typing import Final
+from typing import Optional
 from typing import Set
 
-import sys
 from asyncio_mqtt import Client
+from requests import __version__
+from superbox_utils.argparse import init_argparse
+from superbox_utils.config.exception import ConfigException
+from superbox_utils.core.exception import UnexpectedException
+from superbox_utils.mqtt.connect import mqtt_connect
+from superbox_utils.text.text import slugify
 from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
 
-from superbox_utils.argparse import init_argparse
-from superbox_utils.asyncio import cancel_tasks
-from superbox_utils.mqtt.connect import mqtt_connect
 from unifi_tools.config import Config
-from unifi_tools.config import ConfigException
+from unifi_tools.config import LogPrefix
 from unifi_tools.config import logger
-from unifi_tools.logging import LOG_NAME
-from unifi_tools.plugins.features import FeaturesMqttPlugin
-from unifi_tools.plugins.hass.binary_sensors import HassBinarySensorsMqttPlugin
-from unifi_tools.plugins.hass.switches import HassSwitchesMqttPlugin
+from unifi_tools.log import LOG_NAME
+from unifi_tools.mqtt.discovery.binary_sensors import HassBinarySensorsMqttPlugin
+from unifi_tools.mqtt.discovery.switches import HassSwitchesMqttPlugin
+from unifi_tools.mqtt.features import FeaturesMqttPlugin
 from unifi_tools.unifi import UniFiAPI
 from unifi_tools.unifi import UniFiDevices
-from unifi_tools.version import __version__
 
 disable_warnings(InsecureRequestWarning)
 
@@ -42,7 +43,7 @@ class UniFiTools:
 
     async def _init_tasks(self, stack: AsyncExitStack, mqtt_client: Client):
         tasks: Set[Task] = set()
-        stack.push_async_callback(cancel_tasks)
+        stack.push_async_callback(self._cancel_tasks, tasks)
 
         features = FeaturesMqttPlugin(unifi_devices=self.unifi_devices, mqtt_client=mqtt_client)
         features_tasks = await features.init_tasks(stack)
@@ -61,13 +62,24 @@ class UniFiTools:
 
         await asyncio.gather(*tasks)
 
+    async def _cancel_tasks(self, tasks):
+        for task in tasks:
+            if task.done():
+                continue
+
+            try:
+                task.cancel()
+                await task
+            except asyncio.CancelledError:
+                pass
+
     async def run(self):
         self.unifi_devices.read_devices()
 
         await mqtt_connect(
             mqtt_config=self.config.mqtt,
             logger=logger,
-            mqtt_client_id=f"{self.config.device_info.name.lower()}-{uuid.uuid4()}",
+            mqtt_client_id=f"{slugify(self.config.device_info.name)}-{uuid.uuid4()}",
             callback=self._init_tasks,
         )
 
@@ -105,9 +117,8 @@ class UniFiTools:
 
         if enable_and_start_systemd.lower() == "y":
             print(f"Enable systemd service '{cls.NAME}.service'")
-            status = subprocess.check_output(f"systemctl enable --now {cls.NAME}", shell=True)
 
-            if status:
+            if status := subprocess.check_output(f"systemctl enable --now {cls.NAME}", shell=True):
                 logger.info(status)
         else:
             print("\nYou can enable the systemd service with the command:")
@@ -124,42 +135,39 @@ def parse_args(args) -> argparse.Namespace:
 
 
 def main():
-    args: argparse.Namespace = parse_args(sys.argv[1:])
+    unifi_api: Optional[UniFiAPI] = None
 
     try:
+        args: argparse.Namespace = parse_args(sys.argv[1:])
+
         config = Config()
         config.logging.update_level(LOG_NAME, verbose=args.verbose)
 
         if args.install:
             UniFiTools.install(config=config, assume_yes=args.yes)
         else:
-            loop = asyncio.new_event_loop()
-
-            unifi_api = UniFiAPI(config=config)
+            unifi_api: UniFiAPI = UniFiAPI(config=config)
             unifi_api.login()
 
             unifi_devices: UniFiDevices = UniFiDevices(unifi_api=unifi_api)
             unifi_tools = UniFiTools(unifi_devices=unifi_devices)
 
-            for sig in (signal.SIGINT, signal.SIGTERM):
-                loop.add_signal_handler(sig, cancel_tasks)
-
-            try:
-                loop.run_until_complete(unifi_tools.run())
-            except asyncio.CancelledError:
-                pass
-            finally:
-                if unifi_api.rc > 0:
-                    sys.exit(unifi_api.rc)
-                else:
-                    unifi_api.logout()
-                    logger.info("Successfully shutdown the UniFi Tools service.")
-    except ConfigException as e:
-        logger.error(e)
+            asyncio.run(unifi_tools.run())
+    except ConfigException as error:
+        logger.error("%s %s", LogPrefix.CONFIG, error)
+        sys.exit(1)
+    except UnexpectedException as error:
+        logger.error(error)
         sys.exit(1)
     except KeyboardInterrupt:
         pass
+    except asyncio.CancelledError:
+        pass
+    finally:
+        if unifi_api:
+            if unifi_api.return_code > 0:
+                sys.exit(unifi_api.return_code)
+            else:
+                unifi_api.logout()
 
-
-if __name__ == "__main__":
-    main()
+            logger.info("Successfully shutdown the UniFi Tools service.")

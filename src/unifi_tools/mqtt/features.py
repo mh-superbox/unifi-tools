@@ -13,10 +13,10 @@ from typing import Set
 from unifi_tools.config import logger
 from unifi_tools.features import FeatureConst
 from unifi_tools.features import FeatureMap
-from unifi_tools.logging import LOG_MQTT_INVALID_SUBSCRIBE
-from unifi_tools.logging import LOG_MQTT_PUBLISH
-from unifi_tools.logging import LOG_MQTT_SUBSCRIBE
-from unifi_tools.logging import LOG_MQTT_SUBSCRIBE_TOPIC
+from unifi_tools.log import LOG_MQTT_INVALID_SUBSCRIBE
+from unifi_tools.log import LOG_MQTT_PUBLISH
+from unifi_tools.log import LOG_MQTT_SUBSCRIBE
+from unifi_tools.log import LOG_MQTT_SUBSCRIBE_TOPIC
 
 
 class BaseFeaturesMqttPlugin(ABC):
@@ -31,7 +31,7 @@ class BaseFeaturesMqttPlugin(ABC):
     async def init_tasks(self, stack: AsyncExitStack) -> Set[Task]:
         tasks: Set[Task] = set()
 
-        for feature in self.features.by_feature_type(self.subscribe_feature_types):
+        for feature in self.features.by_feature_types(self.subscribe_feature_types):
             topic: str = f"{feature.topic}/set"
 
             manager: AsyncContextManager = self.mqtt_client.filtered_messages(topic)
@@ -65,9 +65,6 @@ class FeaturesMqttPlugin(BaseFeaturesMqttPlugin):
     subscribe_feature_types: List[str] = [FeatureConst.PORT]
     publish_feature_types: List[str] = [FeatureConst.PORT]
 
-    def __init__(self, unifi_devices, mqtt_client):
-        super().__init__(unifi_devices, mqtt_client)
-
     async def _subscribe(self, feature, topic: str, messages: AsyncIterable):
         async for message in messages:
             data: dict = {}
@@ -87,10 +84,10 @@ class FeaturesMqttPlugin(BaseFeaturesMqttPlugin):
         while self.PUBLISH_RUNNING:
             self.unifi_devices.scan()
 
-            for feature in self.features.by_feature_type(self.publish_feature_types):
+            for feature in self.features.by_feature_types(self.publish_feature_types):
                 if feature.changed:
                     topic: str = f"{feature.topic}/get"
-                    await self.mqtt_client.publish(topic, feature.json_attributes, qos=1, retain=True)
-                    logger.info(LOG_MQTT_PUBLISH, topic, feature.json_attributes)
+                    await self.mqtt_client.publish(topic, feature.payload, qos=1, retain=True)
+                    logger.info(LOG_MQTT_PUBLISH, topic, feature.payload)
 
             await asyncio.sleep(25e-3)

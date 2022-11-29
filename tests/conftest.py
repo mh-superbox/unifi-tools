@@ -24,7 +24,7 @@ class ConfigLoader:
         self.systemd_path.mkdir(parents=True)
 
     def write_config(self, content: str):
-        with open(self.temp_config_file_path, "w") as f:
+        with open(self.temp_config_file_path, "w", encoding="utf-8") as f:
             f.write(content)
 
     def get_config(self) -> Config:

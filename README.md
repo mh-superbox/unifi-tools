@@ -9,7 +9,7 @@ Control UniFi devices with MQTT commands. Optionally you can enable the Home Ass
 **Supported features:**
 
 * Turn on/off PoE for UniFi switch ports (Switch in Home Assistant)
-* Get the PoE modes from UniFi switch ports (Binary sensor in Home Assistant)
+* Get the PoE modes from unifi_tools.unifi switch ports (Binary sensor in Home Assistant)
 
 ## Installation
 
@@ -120,10 +120,10 @@ unifi_controller:
 In features section you can define the PoE mode for a port from a UniFi switch.
 The UniFi switch is defined with its unique ID.
 
-| Key      | Value                                   |
-|----------|-----------------------------------------|
-| `id`     | Used for `Entity ID` in Home Assistant. |
-| `ports`  | Define ports from a UniFi switch.       |
+| Key         | Value                                 |
+|-------------|---------------------------------------|
+| `object_id` | Used for entity ID in Home Assistant. |
+| `ports`     | Define ports from a UniFi switch.     |
 
 | Key        | Value                        |
 |------------|------------------------------|
@@ -134,7 +134,7 @@ The UniFi switch is defined with its unique ID.
 # settings.yaml
 features:
   6070cd81a61f7408a770607c:
-    id: switch
+    object_id: switch
     ports:
       - port_idx: 1
         poe_mode: pasv24

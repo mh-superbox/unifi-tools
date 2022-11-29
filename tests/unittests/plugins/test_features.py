@@ -9,13 +9,13 @@ from unittest.mock import PropertyMock
 
 import pytest
 import responses
-from _pytest.logging import LogCaptureFixture
+from _pytest.logging import LogCaptureFixture  # pylint: disable=import-private-name
 from asyncio_mqtt import Client
 from responses import matchers
 from responses.registries import OrderedRegistry
 
 from conftest_data import CONFIG_CONTENT
-from unifi_tools.plugins.features import FeaturesMqttPlugin
+from unifi_tools.mqtt.features import FeaturesMqttPlugin
 from unifi_tools.unifi import UniFiAPI
 from unifi_tools.unifi import UniFiDevices
 from unittests.plugins.test_features_data import devices_json_response_1
@@ -44,9 +44,11 @@ class MockMQTTMessages:
 
 
 class TestHappyPathFeaturesMqttPlugin(TestUniFiApi):
-    @responses.activate(registry=OrderedRegistry)
+    @responses.activate(  # pylint: disable=unexpected-keyword-arg disable=no-value-for-parameter
+        registry=OrderedRegistry
+    )
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_init_tasks(self, config_loader, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
+    def test_init_tasks(self, unifi_api: UniFiAPI, caplog: LogCaptureFixture):
         async def run():
             mock_list_all_devices_response_1 = responses.get(
                 url=f"{unifi_api.controller_url}{UniFiAPI.STATE_DEVICE_ENDPOINT}",
@@ -115,7 +117,7 @@ class TestHappyPathFeaturesMqttPlugin(TestUniFiApi):
             assert '[MQTT] [mocked_unifi/mocked_id-port-2/get] Publishing message: {"poe_mode": "off"}' in logs
             assert '[MQTT] [mocked_unifi/mocked_id-port-3/get] Publishing message: {"poe_mode": "off"}' in logs
 
-            assert 12 == len(logs)
+            assert len(logs) == 12
 
         loop = asyncio.new_event_loop()
         loop.run_until_complete(run())

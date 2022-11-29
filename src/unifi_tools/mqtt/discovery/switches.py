@@ -11,12 +11,12 @@ from unifi_tools.config import logger
 from unifi_tools.features import FeatureConst
 from unifi_tools.features import FeatureMap
 from unifi_tools.features import FeaturePoEState
-from unifi_tools.logging import LOG_MQTT_PUBLISH
-from unifi_tools.plugins.hass.discover import HassBaseDiscovery
+from unifi_tools.log import LOG_MQTT_PUBLISH
+from unifi_tools.mqtt.discovery.discover import HassBaseDiscovery
 from unifi_tools.unifi import UniFiDevices
 
 
-class HassBinarySensorsDiscovery(HassBaseDiscovery):
+class HassSwitchesDiscovery(HassBaseDiscovery):
     publish_feature_types: List[str] = [FeatureConst.PORT]
 
     def __init__(self, unifi_devices: UniFiDevices, mqtt_client):
@@ -28,18 +28,20 @@ class HassBinarySensorsDiscovery(HassBaseDiscovery):
         super().__init__(config=unifi_devices.config)
 
     def _get_discovery(self, feature) -> Tuple[str, dict]:
-        topic: str = f"{self.config.homeassistant.discovery_prefix}/binary_sensor/{feature.topic}/config"
+        topic: str = f"{self.config.homeassistant.discovery_prefix}/switch/{feature.unique_id}/config"
         poe_on_states: str = "'" + FeaturePoEState.POE + "', '" + FeaturePoEState.POE24V + "'"
 
-        message: dict = {
+        message = {
             "name": feature.friendly_name,
             "unique_id": feature.unique_id,
             "object_id": feature.object_id,
-            "json_attributes_topic": f"{feature.topic}/get",
+            "command_topic": f"{feature.topic}/set",
             "state_topic": f"{feature.topic}/get",
             "value_template": "{% if value_json.poe_mode in [" + poe_on_states + "] %}on{% else %}off{% endif %}",
-            "payload_on": "on",
-            "payload_off": "off",
+            "state_on": "on",
+            "state_off": "off",
+            "payload_on": """{"poe_mode": "on"}""",
+            "payload_off": """{"poe_mode": "off"}""",
             "qos": 2,
             "device": {
                 "name": feature.unifi_device.info["name"],
@@ -53,7 +55,7 @@ class HassBinarySensorsDiscovery(HassBaseDiscovery):
         return topic, message
 
     async def publish(self):
-        for feature in self.features.by_feature_type(self.publish_feature_types):
+        for feature in self.features.by_feature_types(self.publish_feature_types):
             # TODO Refactor when multiple feature types exists!
             if feature.poe_mode:
                 topic, message = self._get_discovery(feature)
@@ -62,11 +64,11 @@ class HassBinarySensorsDiscovery(HassBaseDiscovery):
                 logger.debug(LOG_MQTT_PUBLISH, topic, json_data)
 
 
-class HassBinarySensorsMqttPlugin:
-    """Provide Home Assistant MQTT commands for binary sensors."""
+class HassSwitchesMqttPlugin:
+    """Provide Home Assistant MQTT commands for switches."""
 
     def __init__(self, unifi_devices: UniFiDevices, mqtt_client):
-        self._hass = HassBinarySensorsDiscovery(unifi_devices, mqtt_client)
+        self._hass = HassSwitchesDiscovery(unifi_devices, mqtt_client)
 
     async def init_tasks(self) -> Set[Task]:
         tasks: Set[Task] = set()

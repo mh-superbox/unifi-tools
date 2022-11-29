@@ -1,4 +1,2 @@
-# Ignore everything in this directory
+# created by virtualenv automatically
 *
-# Except this file
-!.gitignore

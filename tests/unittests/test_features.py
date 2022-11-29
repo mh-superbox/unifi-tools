@@ -4,7 +4,6 @@ import pytest
 import responses
 from responses import matchers
 
-from conftest import ConfigLoader
 from conftest_data import CONFIG_CONTENT
 from unifi_tools.features import FeaturePoEState
 from unifi_tools.features import FeaturePort
@@ -67,13 +66,11 @@ class TestHappyPathFeatures(TestUniFiApi):
         ],
     )
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
-    def test_feature_port_properties(
-        self, config_loader: ConfigLoader, unifi_api: UniFiAPI, port_idx: int, expected: dict
-    ):
+    def test_feature_port_properties(self, unifi_api: UniFiAPI, port_idx: int, expected: dict):
         unifi_devices: UniFiDevices = UniFiDevices(unifi_api=unifi_api)
         unifi_devices.scan()
 
-        device = unifi_devices.unifi_device_map["MOCKED_DEVICE_ID"]
+        device = unifi_devices.unifi_device_map.data["MOCKED_DEVICE_ID"]
 
         feature = FeaturePort(
             unifi_devices=unifi_devices,
@@ -88,7 +85,7 @@ class TestHappyPathFeatures(TestUniFiApi):
         assert expected["unique_id"] == feature.unique_id
         assert expected["object_id"] == feature.object_id
         assert expected["topic"] == feature.topic
-        assert expected["json_attributes"] == feature.json_attributes
+        assert expected["json_attributes"] == feature.payload
         assert expected["changed"] is feature.changed
 
     @responses.activate
@@ -103,7 +100,6 @@ class TestHappyPathFeatures(TestUniFiApi):
     @pytest.mark.parametrize("config_loader", [CONFIG_CONTENT], indirect=True)
     def test_feature_set_state(
         self,
-        config_loader: ConfigLoader,
         unifi_api: UniFiAPI,
         port_idx: int,
         poe_mode: str,
@@ -124,7 +120,7 @@ class TestHappyPathFeatures(TestUniFiApi):
         unifi_devices: UniFiDevices = UniFiDevices(unifi_api=unifi_api)
         unifi_devices.scan()
 
-        device = unifi_devices.unifi_device_map["MOCKED_DEVICE_ID"]
+        device = unifi_devices.unifi_device_map.data["MOCKED_DEVICE_ID"]
 
         feature = FeaturePort(
             unifi_devices=unifi_devices,

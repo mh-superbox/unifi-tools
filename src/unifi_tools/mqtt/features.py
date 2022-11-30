@@ -28,9 +28,15 @@ class BaseFeaturesMqttPlugin(ABC):
         self.mqtt_client = mqtt_client
         self.features: FeatureMap = unifi_devices.features
 
-    async def init_tasks(self, stack: AsyncExitStack) -> Set[Task]:
-        tasks: Set[Task] = set()
+    async def init_tasks(self, stack: AsyncExitStack, tasks: Set[Task]):
+        """Initialize MQTT tasks for subscribe and publish MQTT topics.
 
+        Parameters
+        ----------
+        stack: AsyncExitStack
+        tasks: set
+            A set of all MQTT tasks.
+        """
         for feature in self.features.by_feature_types(self.subscribe_feature_types):
             topic: str = f"{feature.topic}/set"
 
@@ -45,8 +51,6 @@ class BaseFeaturesMqttPlugin(ABC):
 
         task = asyncio.create_task(self._publish())
         tasks.add(task)
-
-        return tasks
 
     @abstractmethod
     async def _subscribe(self, feature, topic: str, messages: AsyncIterable):

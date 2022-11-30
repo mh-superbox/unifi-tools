@@ -29,7 +29,14 @@ class UniFiDeviceMap:
     def __init__(self):
         self.data: dict = {}
 
-    def initialise(self, device_infos: List[dict]):
+    def initialize(self, device_infos: List[dict]):
+        """Initialize device map.
+
+        Parameters
+        ----------
+        device_infos: list
+            List of device information's.
+        """
         for device_info in device_infos:
             if device_info.get("adopted") is True:
                 device_id: str = device_info.pop("_id")
@@ -62,7 +69,14 @@ class UniFiAPI:
     REST_DEVICE_ENDPOINT: Final[str] = "/api/s/default/rest/device"
 
     @property
-    def controller_url(self):
+    def controller_url(self) -> str:
+        """Get UniFi Controller URL.
+
+        Returns
+        -------
+        str:
+            UniFi Controller URL
+        """
         _controller_url: str = f"https://{self.config.unifi_controller.url}"
 
         if self.config.unifi_controller.port != 443:
@@ -86,6 +100,13 @@ class UniFiAPI:
         }
 
     def login(self) -> Tuple[Optional[UniFiAPIResult], Optional[Response]]:
+        """Login user.
+
+        Returns
+        -------
+        tuple
+            Result and response data.
+        """
         result, response = self._request_url(
             method="post",
             url=f"{self.controller_url}{self.LOGIN_ENDPOINT}",
@@ -106,6 +127,13 @@ class UniFiAPI:
         return result, response
 
     def logout(self) -> Tuple[Optional[UniFiAPIResult], Optional[Response]]:
+        """Logout user.
+
+        Returns
+        -------
+        tuple
+            Result and response data.
+        """
         csrf_token: str = ""
 
         if self._login:
@@ -125,6 +153,18 @@ class UniFiAPI:
         return result, response
 
     def list_all_devices(self, log: bool = True) -> Tuple[Optional[UniFiAPIResult], Optional[Response]]:
+        """List all devices.
+
+        Parameters
+        ----------
+        log: bool, optional
+            Enable logging if True.
+
+        Returns
+        -------
+        tuple
+            Result and response data.
+        """
         result, response = self._request_url(
             method="get",
             url=f"{self.controller_url}{ self.STATE_DEVICE_ENDPOINT}",
@@ -140,6 +180,20 @@ class UniFiAPI:
     def update_device(
         self, device_id: str, port_overrides: Dict[str, list]
     ) -> Tuple[Optional[UniFiAPIResult], Optional[Response]]:
+        """Update device information.
+
+        Parameters
+        ----------
+        device_id: str
+            Device id from e.g. UniFi Switch.
+        port_overrides: dict
+            Updated device port settings.
+
+        Returns
+        -------
+        tuple
+            Result and response data.
+        """
         result, response = self._request_url(
             method="put",
             url=f"{self.controller_url}{self.REST_DEVICE_ENDPOINT}/{device_id}",
@@ -223,6 +277,17 @@ class UniFiDevices:
         self.config: Config = unifi_api.config
 
     def get_device_info(self, device_id: str) -> dict:
+        """Get device info from UniFi APU devices.
+
+        Parameters
+        ----------
+        device_id: Adopted device ID
+
+        Returns
+        -------
+        dict
+            Device information from API.
+        """
         result, response = self.unifi_api.list_all_devices()  # pylint: disable=unused-variable
         device_info: dict = {}
 
@@ -237,12 +302,14 @@ class UniFiDevices:
         return device_info
 
     def scan(self):
+        """Scan devices and initialize device map."""
         result, response = self.unifi_api.list_all_devices(log=False)  # pylint: disable=unused-variable
 
         if result:
-            self.unifi_device_map.initialise(result.data)
+            self.unifi_device_map.initialize(result.data)
 
     def read_devices(self):
+        """Read adopted devices."""
         logger.info("%s Reading adopted devices.", LogPrefix.API)
         self.scan()
 
@@ -276,5 +343,6 @@ class UniFiSwitch:
         )
 
     def parse_features(self):
+        """Parse features from UniFi switch."""
         for port_info in self.unifi_device.info["ports"].values():
             self._parse_feature_port(port_info=port_info)

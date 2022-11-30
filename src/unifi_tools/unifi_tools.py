@@ -12,7 +12,7 @@ from typing import Optional
 from typing import Set
 
 from asyncio_mqtt import Client
-from requests import __version__
+from requests import __version__  # type: ignore
 from superbox_utils.argparse import init_argparse
 from superbox_utils.config.exception import ConfigException
 from superbox_utils.core.exception import UnexpectedException
@@ -45,20 +45,14 @@ class UniFiTools:
         tasks: Set[Task] = set()
         stack.push_async_callback(self._cancel_tasks, tasks)
 
-        features = FeaturesMqttPlugin(unifi_devices=self.unifi_devices, mqtt_client=mqtt_client)
-        features_tasks = await features.init_tasks(stack)
-        tasks.update(features_tasks)
+        await FeaturesMqttPlugin(unifi_devices=self.unifi_devices, mqtt_client=mqtt_client).init_tasks(stack, tasks)
 
         if self.config.homeassistant.enabled:
-            hass_binary_sensors_plugin = HassBinarySensorsMqttPlugin(
-                unifi_devices=self.unifi_devices, mqtt_client=mqtt_client
+            await HassBinarySensorsMqttPlugin(unifi_devices=self.unifi_devices, mqtt_client=mqtt_client).init_tasks(
+                tasks
             )
-            hass_binary_sensors_tasks = await hass_binary_sensors_plugin.init_tasks()
-            tasks.update(hass_binary_sensors_tasks)
 
-            hass_switches_plugin = HassSwitchesMqttPlugin(unifi_devices=self.unifi_devices, mqtt_client=mqtt_client)
-            hass_switches_tasks = await hass_switches_plugin.init_tasks()
-            tasks.update(hass_switches_tasks)
+            await HassSwitchesMqttPlugin(unifi_devices=self.unifi_devices, mqtt_client=mqtt_client).init_tasks(tasks)
 
         await asyncio.gather(*tasks)
 
@@ -74,6 +68,7 @@ class UniFiTools:
                 pass
 
     async def run(self):
+        """Connect to UniFi API and read devices."""
         self.unifi_devices.read_devices()
 
         await mqtt_connect(
@@ -85,6 +80,15 @@ class UniFiTools:
 
     @classmethod
     def install(cls, config: Config, assume_yes: bool):
+        """Interactive installer for UniFi Tools.
+
+        Parameters
+        ----------
+        config: Config
+            Unipi Control configuration
+        assume_yes: bool
+            Non-interactive mode. Accept all prompts with ``yes``.
+        """
         src_config_path: Path = Path(__file__).parents[0] / "installer/etc/unifi"
         src_systemd_path: Path = Path(__file__).parents[0] / f"installer/etc/systemd/system/{cls.NAME}.service"
         dest_config_path: Path = config.config_file_path.parent
@@ -126,6 +130,17 @@ class UniFiTools:
 
 
 def parse_args(args) -> argparse.Namespace:
+    """Initialize argument parser options.
+
+    Parameters
+    ----------
+    args: list
+        Arguments as list.
+
+    Returns
+    -------
+    Argparse namespace
+    """
     parser: argparse.ArgumentParser = init_argparse(description="Control UniFi devices with MQTT commands")
     parser.add_argument("-i", "--install", action="store_true", help=f"install {UniFiTools.NAME}")
     parser.add_argument("-y", "--yes", action="store_true", help="automatic yes to install prompts")
@@ -135,6 +150,7 @@ def parse_args(args) -> argparse.Namespace:
 
 
 def main():
+    """Entrypoint for UniFi Tool script."""
     unifi_api: Optional[UniFiAPI] = None
 
     try:

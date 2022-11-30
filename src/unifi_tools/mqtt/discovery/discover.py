@@ -15,4 +15,5 @@ class HassBaseDiscovery(ABC):
 
     @abstractmethod
     async def publish(self):
-        pass
+        """Abstract method for publish MQTT Home Assistant discovery topics."""
+        pass  # pylint: disable=unnecessary-pass

@@ -91,10 +91,7 @@ class TestHappyPathFeaturesMqttPlugin(TestUniFiApi):
                 tasks: Set[Task] = set()
 
                 await stack.enter_async_context(mock_mqtt_client)
-
-                features_tasks = await plugin.init_tasks(stack)
-                tasks.update(features_tasks)
-
+                await plugin.init_tasks(stack, tasks)
                 await asyncio.gather(*tasks)
 
                 for task in tasks:

@@ -55,6 +55,7 @@ class HassSwitchesDiscovery(HassBaseDiscovery):
         return topic, message
 
     async def publish(self):
+        """Publish MQTT Home Assistant discovery topics for switches."""
         for feature in self.features.by_feature_types(self.publish_feature_types):
             # TODO Refactor when multiple feature types exists!
             if feature.poe_mode:
@@ -70,10 +71,13 @@ class HassSwitchesMqttPlugin:
     def __init__(self, unifi_devices: UniFiDevices, mqtt_client):
         self._hass = HassSwitchesDiscovery(unifi_devices, mqtt_client)
 
-    async def init_tasks(self) -> Set[Task]:
-        tasks: Set[Task] = set()
+    async def init_tasks(self, tasks: Set[Task]):
+        """Initialize MQTT tasks for publish MQTT topics.
 
+        Parameters
+        ----------
+        tasks: set
+            A set of all MQTT tasks.
+        """
         task: Task[Any] = asyncio.create_task(self._hass.publish())
         tasks.add(task)
-
-        return tasks

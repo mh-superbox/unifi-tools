@@ -53,7 +53,8 @@ class Feature(ABC):
     @cached_property
     @abstractmethod
     def feature_name(self) -> str:
-        pass
+        """Abstract method for feature name."""
+        pass  # pylint: disable=unnecessary-pass
 
     @cached_property
     @abstractmethod
@@ -115,6 +116,13 @@ class FeaturePort(Feature):
 
     @property
     def real_poe_mode(self) -> str:
+        """Get Real POE mode.
+
+        Returns
+        -------
+        str
+            "auto" or "pasv24" if POE is enabled else "off"
+        """
         device_info = self.unifi_devices.unifi_device_map.data.get(self.unifi_device.id)
         port = device_info["ports"][self.port_info.idx]
 
@@ -122,6 +130,13 @@ class FeaturePort(Feature):
 
     @property
     def poe_mode(self) -> str:
+        """Get the POE mode.
+
+        Returns
+        -------
+        str
+            "on" if POE is enabled else "off"
+        """
         if (poe_mode := self.real_poe_mode) in [FeaturePoEState.POE24V, FeaturePoEState.POE]:
             poe_mode = FeaturePoEState.ON
 
@@ -129,6 +144,7 @@ class FeaturePort(Feature):
 
     @property
     def value(self) -> dict:
+        """Return the feature state as dict."""
         _value: dict = {}
 
         if self.poe_mode:
@@ -138,10 +154,12 @@ class FeaturePort(Feature):
 
     @cached_property
     def feature_name(self) -> str:
+        """Return feature name."""
         return FeatureConst.PORT
 
     @cached_property
     def friendly_name(self) -> str:
+        """Return friendly name for Home Assistant."""
         if self.port_info.name:
             return self.port_info.name
 
@@ -149,6 +167,7 @@ class FeaturePort(Feature):
 
     @cached_property
     def device_id(self) -> str:
+        """Return device id."""
         _device_id: str = self.unifi_device.id
 
         if features_config := self.config.features.get(self.unifi_device.id):
@@ -158,22 +177,26 @@ class FeaturePort(Feature):
 
     @cached_property
     def unique_id(self) -> str:
+        """Return unique id for Home Assistant."""
         return f"{slugify(self.config.device_info.name)}-{self.unifi_device.id.lower()}-{self.feature_name.lower()}-{self.port_info.idx}"
 
     @cached_property
     def object_id(self) -> str:
+        """Return object id for Home Assistant."""
         return (
             f"{slugify(self.config.device_info.name)}-{self.device_id}-{self.feature_name.lower()}-{self.port_info.idx}"
         )
 
     @cached_property
     def topic(self) -> str:
+        """Return Unique name for the MQTT topic."""
         return (
             f"{slugify(self.config.device_info.name)}/{self.device_id}-{self.feature_name.lower()}-{self.port_info.idx}"
         )
 
     @property
     def payload(self) -> str:
+        """Return the POE mode as JSON dump."""
         _json_attributes: dict = {}
 
         if self.real_poe_mode:
@@ -210,6 +233,18 @@ class FeaturePort(Feature):
         return False
 
     def set_state(self, value: dict) -> bool:
+        """Set unifi switch port state.
+
+        Parameters
+        ----------
+        value: dict
+            Port settings as dictionary.
+
+        Returns
+        -------
+        bool
+            True if port state updated.
+        """
         update_devices: bool = False
 
         if FeatureConst.POE_MODE in value.keys():

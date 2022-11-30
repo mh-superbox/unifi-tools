@@ -89,7 +89,6 @@ class Config(ConfigLoaderMixin):
 
     def init(self):
         """Initialize configuration and start custom validation."""
-
         for device_id, feature_data in self.features.items():
             try:
                 feature_config: FeatureConfig = FeatureConfig(**feature_data)

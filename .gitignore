@@ -9,6 +9,8 @@
 .mypy_cache
 .pytest_cache
 .venv
+coverage.xml
 build/*
 dist/*
+test-results.xml
 tmp

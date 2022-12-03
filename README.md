@@ -17,21 +17,25 @@ Control UniFi devices with MQTT commands. Optionally you can enable the Home Ass
 
 * Python 3.8
 
-### From GIT
+### From PyPi
+
+```shell
+$ sudo -i
+$ python3 -m venv /opt/.venv/unifi-tools
+$ source /opt/.venv/unifi-tools/bin/activate
+$ pip install unifi-tools
+$ unifi-tools --install
+```
+
+### From GIT (Recommend for develop)
 
 ```shell
 $ sudo -i
 $ cd /opt
 $ git clone https://github.com/mh-superbox/unifi-tools.git
+$ python3 -m venv /opt/.venv/unifi-tools
+$ source /opt/.venv/unifi-tools/bin/activate
 $ pip install -e /opt/unifi-tools
-$ unifi-tools --install
-```
-
-### From PyPi
-
-```shell
-$ sudo -i
-$ pip install unifi-tools
 $ unifi-tools --install
 ```
 

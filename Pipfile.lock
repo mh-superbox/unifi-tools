@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "f04aee3e4b43248c3747ff362b8d3d84d15f5d3ce4057cbe34248125b33e31ec"
+            "sha256": "fadf5b6a2ae39d5e812a16897ec3a2f939cf0e8ac97698ef48e9971466d6744a"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -109,11 +109,11 @@
         },
         "superbox-utils": {
             "hashes": [
-                "sha256:3e399e1b4162c38740d527fd82593aa86a17d3a297eedadcc21f8d3b107b114a",
-                "sha256:ad2e6630b739f097a88f64aa9d61c0e71cf57eac113b4bd8165d4708625dcace"
+                "sha256:128bdfe4d38843e7d431d52f230fa50cfee713be214589377f7e55cb1e06ace4",
+                "sha256:1b865437ad977bdedfdeaa19f91b45bed8c22d5f879b2f73fa7e40c1daa492f6"
             ],
             "index": "pypi",
-            "version": "==2022.3"
+            "version": "==2022.4"
         },
         "urllib3": {
             "hashes": [
@@ -765,7 +765,7 @@
                 "sha256:1511434bb92bf8dd198c12b1cc812e800d4181cfcb867674e0f8279cc93087aa",
                 "sha256:16fa4864408f655d35ec496218b85f79b3437c829e93320c7c9215ccfd92489e"
             ],
-            "markers": "python_version >= '3.7'",
+            "markers": "python_version < '3.10'",
             "version": "==4.4.0"
         },
         "urllib3": {

@@ -5,7 +5,7 @@ import pytest
 from pytest_asyncio.plugin import SubRequest
 
 from unifi_tools.config import Config
-from unifi_tools.config import LOG_NAME
+from unifi_tools.log import LOG_NAME
 
 
 @pytest.fixture(autouse=True, scope="session")

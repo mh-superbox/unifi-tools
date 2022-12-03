@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 from asyncio import Task
 from typing import Any
 from typing import List
@@ -7,13 +8,15 @@ from typing import Set
 from typing import Tuple
 
 from unifi_tools.config import Config
-from unifi_tools.config import logger
 from unifi_tools.features import FeatureConst
 from unifi_tools.features import FeatureMap
 from unifi_tools.features import FeaturePoEState
 from unifi_tools.log import LOG_MQTT_PUBLISH
+from unifi_tools.log import LOG_NAME
 from unifi_tools.mqtt.discovery.discover import HassBaseDiscovery
 from unifi_tools.unifi import UniFiDevices
+
+logger = logging.getLogger(LOG_NAME)
 
 
 class HassSwitchesDiscovery(HassBaseDiscovery):

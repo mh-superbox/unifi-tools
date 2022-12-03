@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 from asyncio import Task
 from contextlib import AsyncExitStack
 from typing import Set
@@ -14,6 +15,7 @@ from responses.registries import OrderedRegistry
 
 from conftest_data import CONFIG_CONTENT
 from unifi_tools.features import Feature
+from unifi_tools.log import LOG_NAME
 from unifi_tools.mqtt.discovery.switches import HassSwitchesDiscovery
 from unifi_tools.mqtt.discovery.switches import HassSwitchesMqttPlugin
 from unifi_tools.unifi import UniFiAPI
@@ -21,6 +23,8 @@ from unifi_tools.unifi import UniFiDevices
 from unittests.plugins.test_features_data import devices_json_response_2
 from unittests.test_unifi_api import TestUniFiApi
 from unittests.test_unifi_api_data import RESPONSE_HEADER
+
+logger = logging.getLogger(LOG_NAME)
 
 
 class TestHappyPathHassSwitchesMqttPlugin(TestUniFiApi):

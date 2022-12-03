@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 from abc import ABC
 from abc import abstractmethod
 from asyncio import Task
@@ -10,13 +11,15 @@ from typing import AsyncIterable
 from typing import List
 from typing import Set
 
-from unifi_tools.config import logger
 from unifi_tools.features import FeatureConst
 from unifi_tools.features import FeatureMap
 from unifi_tools.log import LOG_MQTT_INVALID_SUBSCRIBE
 from unifi_tools.log import LOG_MQTT_PUBLISH
 from unifi_tools.log import LOG_MQTT_SUBSCRIBE
 from unifi_tools.log import LOG_MQTT_SUBSCRIBE_TOPIC
+from unifi_tools.log import LOG_NAME
+
+logger = logging.getLogger(LOG_NAME)
 
 
 class BaseFeaturesMqttPlugin(ABC):

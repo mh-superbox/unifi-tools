@@ -143,9 +143,9 @@ features:
 
 ### Logging
 
-| Key     | Value                                                                  |
-|---------|------------------------------------------------------------------------|
-| `level` | Set level to `debug`, `info`, `warning` or `error`. Default is `info`. |
+| Key      | Value                                                                  |
+|----------|------------------------------------------------------------------------|
+| `level`  | Set level to `debug`, `info`, `warning` or `error`. Default is `info`. |
 
 ```yaml
 # settings.yaml

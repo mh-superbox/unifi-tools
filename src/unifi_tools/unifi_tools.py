@@ -1,8 +1,8 @@
 import argparse
 import asyncio
+import logging
 import shutil
 import subprocess
-import sys
 import uuid
 from asyncio import Task
 from contextlib import AsyncExitStack
@@ -11,19 +11,19 @@ from typing import Final
 from typing import Optional
 from typing import Set
 
+import sys
 from asyncio_mqtt import Client
 from requests import __version__  # type: ignore
+from urllib3 import disable_warnings
+from urllib3.exceptions import InsecureRequestWarning
+
 from superbox_utils.argparse import init_argparse
 from superbox_utils.config.exception import ConfigException
 from superbox_utils.core.exception import UnexpectedException
 from superbox_utils.mqtt.connect import mqtt_connect
 from superbox_utils.text.text import slugify
-from urllib3 import disable_warnings
-from urllib3.exceptions import InsecureRequestWarning
-
 from unifi_tools.config import Config
 from unifi_tools.config import LogPrefix
-from unifi_tools.config import logger
 from unifi_tools.log import LOG_NAME
 from unifi_tools.mqtt.discovery.binary_sensors import HassBinarySensorsMqttPlugin
 from unifi_tools.mqtt.discovery.switches import HassSwitchesMqttPlugin
@@ -32,6 +32,7 @@ from unifi_tools.unifi import UniFiAPI
 from unifi_tools.unifi import UniFiDevices
 
 disable_warnings(InsecureRequestWarning)
+logger = logging.getLogger(LOG_NAME)
 
 
 class UniFiTools:
@@ -157,7 +158,7 @@ def main():
         args: argparse.Namespace = parse_args(sys.argv[1:])
 
         config = Config()
-        config.logging.update_level(LOG_NAME, verbose=args.verbose)
+        config.logging.init(LOG_NAME, log=args.log, log_path=Path("/var/log"), verbose=args.verbose)
 
         if args.install:
             UniFiTools.install(config=config, assume_yes=args.yes)

@@ -1,5 +1,5 @@
 import json
-import sys
+import logging
 from json import JSONDecodeError
 from typing import Dict
 from typing import Final
@@ -9,14 +9,17 @@ from typing import Optional
 from typing import Tuple
 
 import requests  # type: ignore
+import sys
 from requests import Response
 
 from unifi_tools.config import Config
 from unifi_tools.config import LogPrefix
-from unifi_tools.config import logger
 from unifi_tools.features import FeatureConst
 from unifi_tools.features import FeatureMap
 from unifi_tools.features import FeaturePort
+from unifi_tools.log import LOG_NAME
+
+logger = logging.getLogger(LOG_NAME)
 
 
 class UniFiPort(NamedTuple):

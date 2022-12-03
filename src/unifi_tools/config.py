@@ -1,5 +1,4 @@
 import dataclasses
-import logging
 import re
 import socket
 from dataclasses import dataclass
@@ -12,14 +11,8 @@ from superbox_utils.config.exception import ConfigException
 from superbox_utils.config.loader import ConfigLoaderMixin
 from superbox_utils.config.loader import Validation
 from superbox_utils.hass.config import HomeAssistantConfig
-from superbox_utils.logging import init_logger
-from superbox_utils.logging import stream_handler
 from superbox_utils.logging.config import LoggingConfig
 from superbox_utils.mqtt.config import MqttConfig
-
-from unifi_tools.log import LOG_NAME
-
-logger: logging.Logger = init_logger(name=LOG_NAME, level="info", handlers=[stream_handler])
 
 
 class LogPrefix:
@@ -83,8 +76,6 @@ class Config(ConfigLoaderMixin):
 
     def __post_init__(self):
         self.update_from_yaml_file(config_path=self.config_file_path)
-        self.logging.update_level(name=LOG_NAME)
-
         self.init()
 
     def init(self):
